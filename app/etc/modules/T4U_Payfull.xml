@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<config>
+  <modules>
+    <T4U_Payfull>
+      <active>true</active>
+      <codePool>local</codePool>
+      <version>1.0.0</version>
+    </T4U_Payfull>
+  </modules>
+</config>

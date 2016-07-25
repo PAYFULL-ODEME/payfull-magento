@@ -1,0 +1,25 @@
+<?php
+$installer = $this;
+$installer->startSetup();
+$sql=<<<SQLTEXT
+ALTER TABLE `{$this->getTable('sales/quote_payment')}` 
+    ADD `installment` TINYINT UNSIGNED NOT NULL DEFAULT '1',
+    ADD `use3d_secure` TINYINT UNSIGNED NOT NULL DEFAULT '1',
+    ADD `bank_id` VARCHAR( 60 ) NOT NULL,
+    ADD `gateway` VARCHAR( 30 ) NOT NULL
+;
+  
+ALTER TABLE `{$this->getTable('sales/order_payment')}`
+    ADD `installment` TINYINT UNSIGNED NOT NULL DEFAULT '1',
+    ADD `use3d_secure` TINYINT UNSIGNED NOT NULL DEFAULT '1',
+    ADD `bank_id` VARCHAR( 60 ) NOT NULL,
+    ADD `gateway` VARCHAR( 30 ) NOT NULL
+;
+SQLTEXT;
+
+$installer->run($sql);
+//demo 
+//Mage::getModel('core/url_rewrite')->setId(null);
+//demo 
+$installer->endSetup();
+	 

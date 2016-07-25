@@ -1,0 +1,225 @@
+<?php
+$_code = $this->getMethodCode();
+
+$installment = Mage::getStoreConfig('payment/payfull/installments');
+$secure_3d = Mage::getStoreConfig('payment/payfull/use3d_secure');
+$quote = Mage::getModel('checkout/session')->getQuote();
+$quoteData = $quote->getData();
+$grandTotal = $this->getTotal(); 
+$currency_code = $this->getCurrencySymbole();
+$currency_symbol = $this->getCurrencySymbol();
+$secure_3d = 1;
+?>
+<style>
+    .card_loder > img {display: inline;vertical-align: middle;width: 25px;}
+    .card_image > img {display: inline-block;width: auto;height:25px;vertical-align: middle;}
+    .card_image { display: inline-block;  padding:0 5px;vertical-align: bottom;}
+    .toatl_label h3 {margin: 15px 0 0 0;}
+    .install_body_label {float: left;width: 32%;height: 40px;text-align: center; border-bottom: 1px solid #d2d2d2;line-height: 40px;}
+    .installment_row {/* padding-top: 10px;*/}
+    .install_body_label.installment_radio, .installmet_head .install_head_label.add_space {height: 40px;text-align: center;width: 4%;line-height: 40px;}
+    #installment_table_id {background-color: #eee;border: 1px solid;border-radius: 5px;padding: 10px;margin-top: 20px;}
+    .installmet_head .install_head_label {float: left;font-weight: bold;text-align: center;width: 32%; height: 40px;line-height: 40px;border-bottom: 2px solid #d2d2d2; }
+    .installment_body , .installment_footer {  clear: both; }
+    .toatl_label {display:  none;}
+</style>
+
+<ul class="form-list" id="payment_form_<?php echo $_code ?>" style="display:none;">
+    <li class="toatl_label">
+        <h3>        
+            <label><b><?php echo $this->__('Total: ') ?></b></label>
+            <span rel="<?php echo $grandTotal; ?>" id="grand_total" class="grant_total_custom"><?php echo Mage::helper('core')->currency($grandTotal, true, false); ?></span>
+        </h3>
+    </li>
+    <li>
+        <p class="required"><?php echo $this->__('* Required Fields') ?></p>
+        <label for="<?php echo $_code ?>_cc_owner" class="required"><em>*</em><?php echo $this->__('Name on Card') ?></label>
+        <div class="input-box">
+            <input type="text" title="<?php echo $this->__('Name on Card') ?>" class="input-text required-entry" id="<?php echo $_code ?>_cc_owner" name="payment[cc_owner]" value="Holder <?php echo date('m-d H:i') ?>" />
+        </div>
+    </li>
+    <li>
+        <label for="<?php echo $_code ?>_cc_number" class="required"><em>*</em><?php echo $this->__('Credit Card Number') ?></label>
+        <div class="input-box">
+            <input type="text" pattern="\d*" id="<?php echo $_code ?>_cc_number" name="payment[cc_number]" title="<?php echo $this->__('Credit Card Number') ?>" class="input-text required-entry validate-cc-number validate-cc-type" maxlength="16" value="4355084355084358" />
+            <span style="display: none;" class="card_image" id="payfull_card_type">
+                <img src="" />
+            </span>
+            <span style="display: none;" class="card_loder" id="payfull_card_load">
+                <img src="<?php echo $this->getSkinUrl('images/opc-ajax-loader.gif'); ?>" />
+            </span>
+        </div>
+    </li>
+    <li>
+        <label for="<?php echo $_code ?>_expiration" class="required"><em>*</em><?php echo $this->__('Expiration Date') ?></label>
+        <div class="input-box">
+            <div class="v-fix">
+                <select id="<?php echo $_code ?>_expiration" name="payment[cc_exp_month]" class="month validate-cc-exp required-entry">
+                    <?php $_ccExpMonth = 12 ?>
+                    <?php foreach ($this->getCcMonths() as $k => $v): ?>
+                        <option value="<?php echo $k ? $k : '' ?>"<?php if ($k == $_ccExpMonth): ?> selected="selected"<?php endif ?>><?php echo $v ?></option>
+					<?php endforeach ?>
+                </select>
+            </div>
+            <div class="v-fix">
+                    <?php $_ccExpYear = 2030 ?>
+                <select id="<?php echo $_code ?>_expiration_yr" name="payment[cc_exp_year]" class="year required-entry">
+                    <?php foreach ($this->getCcYears() as $k => $v): ?>
+                        <option value="<?php echo $k ? $k : '' ?>"<?php if ($k == $_ccExpYear): ?> selected="selected"<?php endif ?>><?php echo $v ?></option>
+					<?php endforeach ?>
+                </select>
+            </div>
+        </div>
+    </li>
+    <?php if ($this->hasVerification()): ?>
+    <li>
+        <label for="<?php echo $_code ?>_cc_cid" class="required"><em>*</em><?php echo $this->__('Card Verification Number') ?></label>
+        <div class="input-box">
+            <div class="v-fix">
+                <input type="text" pattern="\d*" title="<?php echo $this->__('Card Verification Number') ?>" class="input-text cvv required-entry validate-cc-cvn" id="<?php echo $_code ?>_cc_cid" name="payment[cc_cid]" value="000" />
+            </div>
+            <a href="#" class="cvv-what-is-this"><?php echo $this->__('What is this?') ?></a>
+        </div>
+    </li>
+    <?php endif; ?>
+
+    <?php if ($secure_3d == 1) : ?>
+    <li class="td_secure" id="enable3dsecure">
+        <div class="input-box">
+            <input type="checkbox" id="<?php echo $_code ?>_use3d_secure" value="1" checked name="payment[use3d_secure]" />
+            <label for="<?php echo $_code ?>_use3d_secure"> <?php echo $this->__('Use 3D secure Payments System') ?></label>
+        </div>
+    </li>
+    <?php endif; ?>
+
+    <?php if ($installment == 1) : ?>
+    <li>
+        <div id="installment_table_id">
+            <div class="installmet_head">
+                <div class="install_head_label add_space"></div>
+                <div class="install_head_label"><?php echo $this->__('Installmet') ?></div>
+                <div class="install_head_label"><?php echo $this->__('Amount / Month') ?></div>
+                <div class="install_head_label"><?php echo $this->__('Total') ?></div>
+            </div>
+            <div class="installment_body" id="installment_body">
+                <div class="installment_row">
+                    <div class="install_body_label installment_radio"><input rel="1" type="radio" class="installment_radio" checked name="payment[installment]" value="1" /></div>
+                    <div class="install_body_label installment_lable_code">1</div>
+                    <div class="install_body_label"><?php echo Mage::helper('core')->currency($grandTotal, true, false); ?></div>
+                    <div class="install_body_label final_commi_price" rel="<?php echo $grandTotal; ?>"><?php echo Mage::helper('core')->currency($grandTotal, true, false); ?></div>
+                </div>
+            </div>
+            <div class="installment_footer"></div>
+        </div>
+        <input id="<?php echo $_code ?>_has3d" type="hidden" title="<?php echo $this->__('Has 3D') ?>" name="payment[has3d]" value="<?php echo $this->htmlEscape($this->getInfoData('has3d')) ?>" />
+        <input id="<?php echo $_code ?>_bank_id" type="hidden" title="<?php echo $this->__('Bank') ?>" name="payment[bank_id]" value="<?php echo $this->htmlEscape($this->getInfoData('bank_id')) ?>" />
+        <input id="<?php echo $_code ?>_gateway" type="hidden" title="<?php echo $this->__('Gateway') ?>" name="payment[gateway]" value="<?php echo $this->htmlEscape($this->getInfoData('gateway')) ?>" />
+    </li>
+    <?php endif; ?>
+</ul>
+
+<script type="text/javascript">
+(function($){
+    var bin = false;
+    var banks = false;
+    var currency_code = '<?php echo $currency_code; ?>';
+    var currency_symbole = '<?php echo $currency_symbol; ?>';
+    var grandTotal = $('#grand_total').attr('rel');
+    var $cc = $('#<?php echo $_code ?>_cc_number');
+    var $bank = $('#<?php echo $_code ?>_bank_id');
+    var $has3d = $('#<?php echo $_code ?>_has3d');
+    var $gateway = $('#<?php echo $_code ?>_gateway');
+    var $options = $('#installment_body');
+
+
+    (function() {
+        var url = '<?php echo Mage::getUrl('payfull/service/banks', array('_secure' => false)); ?>';
+        $.ajax({
+            url: url,
+            dataType: 'json',
+            data: {bin: bin},
+            success: function(response){
+                banks = response.data;
+                console.log(banks);
+            }
+        });
+    })();
+
+    function getInstallementOption(count, amount, percentage, currency) {
+        var commession = percentage.replace('%', '');
+        var total = parseFloat(amount) * (1 + parseFloat(commession) / 100);
+        var pmon = total / count;
+        var checked = count==1 ? 'checked' : '';
+        return ''
+            + '<div class="installment_row">'
+            + '<div class="install_body_label installment_radio">'
+            + '<input rel="'+count+'" class="custom_field_installment_radio" type="radio" '+checked+' name="payment[installment]" value="'+count+'" />'
+            + '</div>'
+            + '<div class="install_body_label installment_lable_code">'+count+'</div>'
+            + '<div class="install_body_label">' + currency +' '+ pmon.toFixed(2) + '</div>'
+            + '<div rel="' + total + '" class="install_body_label final_commi_price">' + currency +' '+ parseFloat(total).toFixed(2) + '</div>'
+            + '</div>'
+        ;
+    }
+
+    function refreshInstallmentOptions(bankName) {
+        if(!banks) { return; }
+        
+
+        $options.show();
+        $options.html('');
+        $options.append(getInstallementOption(1, grandTotal, '0', currency_symbole));
+        $('#enable3dsecure').show();
+
+        for (var i in banks) {
+            var bank = banks[i];
+            if (bank.bank == bankName) {
+                var opt, t, fee;
+                $bank.val(bank.bank);
+                $has3d.val(bank.has3d);
+                $gateway.val(bank.gateway);
+                $.each(bank.installments, function (i, item) {
+                    $options.append(getInstallementOption(parseInt(item.count), grandTotal, item.commission, currency_symbole));
+                });
+                break;
+            }
+        }
+    }
+
+    $cc.keyup(function(){
+        if(this.value && this.value.length >= 6) {
+            var t = this.value.replace(/\s/g, '').substr(0, 6);
+            if(t==bin) { return; }
+            bin = t;
+            var imgUrl = '<?php echo Mage::getBaseUrl('js'); ?>T4U/cards/';
+            var url = '<?php echo Mage::getUrl('payfull/service/issuer', array('_secure' => false)); ?>';
+            $('#payfull_card_type').hide();
+            $('#payfull_card_load').show();
+            $.ajax({
+                url: url,
+                dataType: 'json',
+                data: {bin: bin},
+                success: function(response) {
+                    var type = response.data.brand.toLowerCase();
+                    $('#payfull_card_type').show();
+                    $('#payfull_card_load').hide();
+                    $("#payfull_card_type img").attr('src', imgUrl+type+'.png');
+                    refreshInstallmentOptions(response.data.bank_id);
+                }
+            })
+        }
+    });
+
+    $('body').on("change", '.custom_field_installment_radio', function () {
+        var count = jQuery(this).attr('rel');
+        var has3D = parseInt($has3d.val());
+
+        if(count!=1 && has3D!=1) {
+            $('#enable3dsecure').hide();
+            $('#enable3dsecure input').prop("checked", false);
+        } else {
+            $('#enable3dsecure').show();
+        } 
+    });
+})(jQuery);
+</script>
