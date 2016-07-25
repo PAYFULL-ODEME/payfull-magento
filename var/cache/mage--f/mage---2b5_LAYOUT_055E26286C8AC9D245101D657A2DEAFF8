@@ -1,0 +1,1 @@
+<block name="wysiwyg_widget" type="widget/adminhtml_widget" output="toHtml"/>
