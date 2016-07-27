@@ -15,12 +15,31 @@ class T4U_Payfull_Model_Commission extends Mage_Sales_Model_Quote_Address_Total_
             return $this;
         }
 
-        if (isset($_REQUEST['payment']) && $_REQUEST['payment'] != '') {
-            $additional = $this->getCommission($_REQUEST["payment"]);
-            $address->setGrandTotal($address->getGrandTotal() + $additional);
-            $address->setBaseGrandTotal($address->getGrandTotal() + $additional);
+        if (isset($_REQUEST['payment']) && $_REQUEST['payment'] != '' AND $_REQUEST['payment']['installment'] > 1) {
+            $exist_amount   = $quote->getFeeAmount();
+            $fee            = $this->getCommission($_REQUEST["payment"]);
+            $balance        = $fee - $exist_amount;
+            $address->setFeeAmount($balance);
+            $address->setBaseFeeAmount($balance);
+
+            $quote->setFeeAmount($balance);
+
+            $address->setGrandTotal($address->getGrandTotal() + $address->getFeeAmount());
+            $address->setBaseGrandTotal($address->getBaseGrandTotal() + $address->getBaseFeeAmount());
+
         }
 
+        return $this;
+    }
+
+    public function fetch(Mage_Sales_Model_Quote_Address $address)
+    {
+        $amt = $address->getFeeAmount();
+        $address->addTotal(array(
+            'code'=>$this->getCode(),
+            'title'=>__('Installment Commission'),
+            'value'=> $amt
+        ));
         return $this;
     }
 

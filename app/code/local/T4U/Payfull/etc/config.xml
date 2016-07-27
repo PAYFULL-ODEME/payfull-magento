@@ -65,6 +65,12 @@
             </gateway>
         </sales_convert_quote_payment>
     </fieldsets>
+    <fieldsets>
+      <sales_convert_quote_address>
+       <commisson_amount><to_order>*</to_order></commisson_amount>
+          <base_commission_amount><to_order>*</to_order></base_commission_amount>
+       </sales_convert_quote_address>
+    </fieldsets>
     <helpers>
       <payfull>
         <class>T4U_Payfull_Helper</class>
