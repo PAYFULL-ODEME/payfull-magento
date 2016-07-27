@@ -47,14 +47,12 @@ class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
 
     public function assignData($data)
     {
-
         // Mage::throwException("assignData: ".print_r($data, 1));
         // return $this;
 
         $commission = array();
         $commission['rate'] = $data->getCommission();
         $commission['total'] = $data->getCommissionRate();
-
 
         $info = $this->getInfoInstance();
 

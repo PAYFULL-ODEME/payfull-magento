@@ -40,6 +40,15 @@
     </translate>
   </frontend>
   <global>
+      <sales>
+          <quote>
+              <totals>
+                  <fee>
+                      <class>payfull/commission</class>
+                  </fee>
+              </totals>
+          </quote>
+      </sales>
     <fieldsets>
         <sales_convert_quote_payment>
             <installment>
