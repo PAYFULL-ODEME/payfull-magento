@@ -263,11 +263,10 @@ class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
         }
         return $request;
     }
-
     
-
     public function callApi($action, $data, $return_json=true)
     {
+        $this->validatePaymentData($data);
         $data['type'] = $action;
         $data['merchant'] = $this->config('username');
         $data['language'] = explode('_', Mage::app()->getLocale()->getLocaleCode())[0];
@@ -280,6 +279,55 @@ class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
             return json_decode($content, true);
         }
         return $content;
+    }
+
+    protected function validatePaymentData($data)
+    {
+        try {
+            $this->checkCCNumber($data["cc_number"]);
+            $this->checkCCCVC($data["cc_number"], $data["cc_cvc"]);
+            $this->checkCCEXPDate($data["cc_month"], $data["cc_year"]);
+        } catch (\Exception $ex) {
+            Mage::throwException($ex->getMessage());
+        }
+    }
+
+    protected function checkCCNumber($cardNumber){
+        $cardNumber = preg_replace('/\D/', '', $cardNumber);
+        $len = strlen($cardNumber);
+        if ($len < 15 || $len > 16) {
+
+        }else {
+            switch($cardNumber) {
+                case(preg_match ('/^4/', $cardNumber) >= 1):
+                    break;
+                case(preg_match ('/^5[1-5]/', $cardNumber) >= 1):
+                    break;
+                default:
+                    throw new Exception($this->_getHelper('payfull')->__('Please enter a valid credit card number.'));
+                    break;
+            }
+        }
+    }
+
+    protected function checkCCCVC($cardNumber, $cvc){
+        // Get the first number of the credit card so we know how many digits to look for
+        $firstnumber = (int) substr($cardNumber, 0, 1);
+        if ($firstnumber === 3){
+            if (!preg_match("/^\d{4}$/", $cvc)){
+                throw new Exception($this->_getHelper('payfull')->__('Please enter a valid credit card verification number.'));
+            }
+        }else if (!preg_match("/^\d{3}$/", $cvc)){
+            throw new Exception($this->_getHelper('payfull')->__('Please enter a valid credit card verification number.'));
+        }
+        return true;
+    }
+
+    protected function checkCCEXPDate($month, $year){
+        if(strtotime('01/'.$month.'/'.$year) <= time()){
+            throw new Exception($this->_getHelper('payfull')->__('Incorrect credit card expiration date.'));
+        }
+        return true;
     }
 
     protected function hash($data, $password) 

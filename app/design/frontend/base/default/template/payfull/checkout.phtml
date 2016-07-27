@@ -11,6 +11,26 @@ $currency_symbol    = $this->getCurrencySymbol();
 $secure_3d          = 1;
 ?>
 <style>
+    .input-cc-number-visa {
+        background: rgba(0, 0, 0, 0) url("<?php echo $this->getSkinUrl('images/payfull/payfull_creditcard_visa.png'); ?>") no-repeat scroll right center / 13% auto;
+        float: left;
+    }
+
+    .input-cc-number-master {
+        background: rgba(0, 0, 0, 0) url("<?php echo $this->getSkinUrl('images/payfull/payfull_creditcard_master.png'); ?>") no-repeat scroll right center / 13% auto;
+        float: left;
+    }
+
+    .input-cc-number-not-supported {
+        background: rgba(0, 0, 0, 0) url("<?php echo $this->getSkinUrl('images/payfull/payfull_creditcard_not_supported.png'); ?>") no-repeat scroll right center / 4% auto;
+        float: left;
+    }
+
+    #payment_form_payfull > li {width: 75% !important;  }
+    #payment_form_payfull input[type='text'] {width: 100% !important;  }
+    #payment_form_payfull .v-fix {width: 100% !important;  }
+    #payment_form_payfull .divSelectMenu {width: 49% !important;  }
+    #payment_form_payfull .divSelectMenu > select {width: 100% !important; height: 30px !important; }
     .card_loder > img {display: inline;vertical-align: middle;width: 25px;}
     .card_image > img {display: inline-block;width: auto;height:25px;vertical-align: middle;}
     .card_image { display: inline-block;  padding:0 5px;vertical-align: bottom;}
@@ -41,10 +61,7 @@ $secure_3d          = 1;
     <li>
         <label for="<?php echo $_code ?>_cc_number" class="required"><em>*</em><?php echo $this->__('Credit Card Number') ?></label>
         <div class="input-box">
-            <input type="text" pattern="\d*" id="<?php echo $_code ?>_cc_number" name="payment[cc_number]" title="<?php echo $this->__('Credit Card Number') ?>" class="input-text required-entry validate-cc-number validate-cc-type" maxlength="16" value="" />
-            <span style="display: none;" class="card_image" id="payfull_card_type">
-                <img src="" />
-            </span>
+            <input type="text" pattern="\d*" id="<?php echo $_code ?>_cc_number" name="payment[cc_number]" title="<?php echo $this->__('Credit Card Number') ?>" class="input-cc-number-not-supported  input-text required-entry validate-cc-number validate-cc-type" maxlength="16" value="" />
             <span style="display: none;" class="card_loder" id="payfull_card_load">
                 <img src="<?php echo $this->getSkinUrl('images/opc-ajax-loader.gif'); ?>" />
             </span>
@@ -53,7 +70,7 @@ $secure_3d          = 1;
     <li>
         <label for="<?php echo $_code ?>_expiration" class="required"><em>*</em><?php echo $this->__('Expiration Date') ?></label>
         <div class="input-box">
-            <div class="v-fix">
+            <div class="v-fix divSelectMenu">
                 <select id="<?php echo $_code ?>_expiration" name="payment[cc_exp_month]" class="month validate-cc-exp required-entry">
                     <?php $_ccExpMonth = $this->getInfoData('cc_exp_month') ?>
                     <?php foreach ($this->getCcMonths() as $k => $v): ?>
@@ -61,7 +78,7 @@ $secure_3d          = 1;
 					<?php endforeach ?>
                 </select>
             </div>
-            <div class="v-fix">
+            <div class="v-fix divSelectMenu">
                     <?php $_ccExpYear = $this->getInfoData('cc_exp_year') ?>
                 <select id="<?php echo $_code ?>_expiration_yr" name="payment[cc_exp_year]" class="year required-entry">
                     <?php foreach ($this->getCcYears() as $k => $v): ?>
@@ -79,15 +96,6 @@ $secure_3d          = 1;
                 <input type="text" pattern="\d*" title="<?php echo $this->__('Card Verification Number') ?>" class="input-text cvv required-entry validate-cc-cvn" id="<?php echo $_code ?>_cc_cid" name="payment[cc_cid]" value="" />
             </div>
             <a href="#" class="cvv-what-is-this"><?php echo $this->__('What is this?') ?></a>
-        </div>
-    </li>
-    <?php endif; ?>
-
-    <?php if ($secure_3d == 1) : ?>
-    <li class="td_secure" id="enable3dsecure">
-        <div class="input-box">
-            <input type="checkbox" id="<?php echo $_code ?>_use3d_secure" value="1" name="payment[use3d_secure]" />
-            <label for="<?php echo $_code ?>_use3d_secure"> <?php echo $this->__('Use 3D secure Payments System') ?></label>
         </div>
     </li>
     <?php endif; ?>
@@ -116,12 +124,23 @@ $secure_3d          = 1;
         <input id="<?php echo $_code ?>_gateway" type="hidden" title="<?php echo $this->__('Gateway') ?>" name="payment[gateway]" value="<?php echo $this->htmlEscape($this->getInfoData('gateway')) ?>" />
     </li>
     <?php endif; ?>
+
+    <?php if ($secure_3d == 1) : ?>
+        <li class="td_secure" id="enable3dsecure">
+            <div class="input-box">
+                <input type="checkbox" id="<?php echo $_code ?>_use3d_secure" value="1" name="payment[use3d_secure]" />
+                <label for="<?php echo $_code ?>_use3d_secure"> <?php echo $this->__('Use 3D secure Payments System') ?></label>
+            </div>
+        </li>
+    <?php endif; ?>
+
 </ul>
 
 <script type="text/javascript">
 (function($){
-    var bin                 = false;
+
     var banks               = false;
+    var bin                 = false;
     var currency_code       = '<?php echo $currency_code; ?>';
     var currency_symbole    = '<?php echo $currency_symbol; ?>';
     var grandTotal          = $('#grand_total').attr('rel');
@@ -130,20 +149,55 @@ $secure_3d          = 1;
     var $has3d              = $('#<?php echo $_code ?>_has3d');
     var $gateway            = $('#<?php echo $_code ?>_gateway');
     var $options            = $('#installment_body');
+    var $card_load          = $('#payfull_card_load');
 
+    $cc.keyup(function(){
+        var number = $(this).val();
+        cardBrandDetector(number);
+        if(this.value && this.value.length == 16) {
+            bin = this.value.substr(0, 6);
+            var url = '<?php echo Mage::getUrl('payfull/service/issuer', array('_secure' => false)); ?>';
+            $card_load.show();
+            $.ajax({
+                url: url,
+                dataType: 'json',
+                data: {bin: bin},
+                success: function(response) {
+                    $card_load.hide();
+                    refreshInstallmentOptions(response.data.bank_id);
+                }
+            })
+        }
+    });
 
-    (function() {
-        var url = '<?php echo Mage::getUrl('payfull/service/banks', array('_secure' => false)); ?>';
-        $.ajax({
-            url: url,
-            dataType: 'json',
-            data: {bin: bin},
-            success: function(response){
-                banks = response.data;
-                console.log(banks);
-            }
-        });
-    })();
+    $('body').on("change", '.custom_field_installment_radio', function () {
+        var count = jQuery(this).attr('rel');
+        var has3D = parseInt($has3d.val());
+
+        if(count!=1 && has3D!=1) {
+            $('#enable3dsecure').hide();
+            $('#enable3dsecure input').prop("checked", false);
+        } else {
+            $('#enable3dsecure').show();
+        }
+    });
+
+    function cardBrandDetector(number) {
+        $cc.removeClass('input-cc-number-not-supported');
+        var re_visa = new RegExp("^4");
+        var re_master = new RegExp("^5[1-5]");
+        if (number.match(re_visa) != null){
+            $cc.addClass('input-cc-number-visa');
+            $cc.removeClass('input-cc-number-master');
+        }else if (number.match(re_master) != null){
+            $cc.removeClass('input-cc-number-visa');
+            $cc.addClass('input-cc-number-master');
+        }else{
+            $cc.removeClass('input-cc-number-visa');
+            $cc.removeClass('input-cc-number-master');
+            $cc.addClass('input-cc-number-not-supported');
+        }
+    }
 
     function getInstallementOption(count, amount, percentage, currency) {
         var commession = percentage.replace('%', '');
@@ -159,13 +213,12 @@ $secure_3d          = 1;
             + '<div class="install_body_label">' + currency +' '+ pmon.toFixed(2) + '</div>'
             + '<div rel="' + total + '" class="install_body_label final_commi_price">' + currency +' '+ parseFloat(total).toFixed(2) + '</div>'
             + '</div>'
-        ;
+            ;
     }
 
     function refreshInstallmentOptions(bankName) {
+        getBankList();
         if(!banks) { return; }
-        
-
         $options.show();
         $options.html('');
         $options.append(getInstallementOption(1, grandTotal, '0', currency_symbole));
@@ -186,40 +239,16 @@ $secure_3d          = 1;
         }
     }
 
-    $cc.keyup(function(){
-        if(this.value && this.value.length >= 6) {
-            var t = this.value.replace(/\s/g, '').substr(0, 6);
-            if(t==bin) { return; }
-            bin = t;
-            var imgUrl = '<?php echo Mage::getBaseUrl('js'); ?>T4U/cards/';
-            var url = '<?php echo Mage::getUrl('payfull/service/issuer', array('_secure' => false)); ?>';
-            $('#payfull_card_type').hide();
-            $('#payfull_card_load').show();
-            $.ajax({
-                url: url,
-                dataType: 'json',
-                data: {bin: bin},
-                success: function(response) {
-                    var type = response.data.brand.toLowerCase();
-                    $('#payfull_card_type').show();
-                    $('#payfull_card_load').hide();
-                    $("#payfull_card_type img").attr('src', imgUrl+type+'.png');
-                    refreshInstallmentOptions(response.data.bank_id);
-                }
-            })
-        }
-    });
-
-    $('body').on("change", '.custom_field_installment_radio', function () {
-        var count = jQuery(this).attr('rel');
-        var has3D = parseInt($has3d.val());
-
-        if(count!=1 && has3D!=1) {
-            $('#enable3dsecure').hide();
-            $('#enable3dsecure input').prop("checked", false);
-        } else {
-            $('#enable3dsecure').show();
-        } 
-    });
+    function getBankList(){
+        var url = '<?php echo Mage::getUrl('payfull/service/banks', array('_secure' => false)); ?>';
+        $.ajax({
+            url: url,
+            dataType: 'json',
+            data: {bin: bin},
+            success: function(response){
+                banks = response.data;
+            }
+        });
+    }
 })(jQuery);
 </script>
