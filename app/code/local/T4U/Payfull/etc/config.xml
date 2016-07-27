@@ -28,6 +28,17 @@
       </payfull>
     </routers>
   </frontend>
+  <frontend>
+    <translate>
+      <modules>
+        <T4U_Payfull>
+          <files>
+            <default>T4U_Payfull.csv</default>
+          </files>
+        </T4U_Payfull>
+      </modules>
+    </translate>
+  </frontend>
   <global>
     <fieldsets>
         <sales_convert_quote_payment>

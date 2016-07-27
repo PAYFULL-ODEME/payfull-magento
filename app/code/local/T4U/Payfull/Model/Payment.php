@@ -198,7 +198,7 @@ class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
                 Mage::throwException($message);
             }
         } else {
-            $errorMsg = $this->_getHelper('payfull')->__('The order does not support refund operation.');
+            $errorMsg = __('The order does not support refund operation.');
             Mage::throwException($errorMsg);
         }
         return $this;
@@ -305,7 +305,7 @@ class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
                 case(preg_match ('/^5[1-5]/', $cardNumber) >= 1):
                     break;
                 default:
-                    throw new Exception($this->_getHelper('payfull')->__('Please enter a valid credit card number.'));
+                    throw new Exception(__('Please enter a valid credit card number.'));
                     break;
             }
         }
@@ -316,17 +316,17 @@ class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
         $firstnumber = (int) substr($cardNumber, 0, 1);
         if ($firstnumber === 3){
             if (!preg_match("/^\d{4}$/", $cvc)){
-                throw new Exception($this->_getHelper('payfull')->__('Please enter a valid credit card verification number.'));
+                throw new Exception(__('Please enter a valid credit card verification number.'));
             }
         }else if (!preg_match("/^\d{3}$/", $cvc)){
-            throw new Exception($this->_getHelper('payfull')->__('Please enter a valid credit card verification number.'));
+            throw new Exception(__('Please enter a valid credit card verification number.'));
         }
         return true;
     }
 
     protected function checkCCEXPDate($month, $year){
         if(strtotime('01/'.$month.'/'.$year) <= time()){
-            throw new Exception($this->_getHelper('payfull')->__('Incorrect credit card expiration date.'));
+            throw new Exception(__('Incorrect credit card expiration date.'));
         }
         return true;
     }
