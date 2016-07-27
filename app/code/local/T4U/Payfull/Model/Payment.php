@@ -110,6 +110,7 @@ class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
         
         $request = $this->buildSalePacket($payment, $amount);
         try {
+            $this->validatePaymentData($request);
             $result = $this->callApi('Sale', $request, false);
             $isValid3DResponse = strpos($result, '<head>') !== false ? true : false; // response has HTML content
             if($isValid3DResponse) {
@@ -149,6 +150,7 @@ class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
         $quote = Mage::getSingleton('checkout/type_onepage')->getQuote();
 
         try {
+            $this->validatePaymentData($request);
             $result = $this->callApi('Sale', $request, !$is3d);
             /*$isValid3DResponse = $is3d && strpos($result, '<head>') !== false ? true : false;
             if($isValid3DResponse) {
@@ -266,7 +268,6 @@ class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
     
     public function callApi($action, $data, $return_json=true)
     {
-        $this->validatePaymentData($data);
         $data['type'] = $action;
         $data['merchant'] = $this->config('username');
         $data['language'] = explode('_', Mage::app()->getLocale()->getLocaleCode())[0];
