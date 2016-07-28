@@ -58,8 +58,13 @@ class T4U_Payfull_Model_Commission extends Mage_Sales_Model_Quote_Address_Total_
         $banksInfo = $paymentHelper->banks();
         $banksInfo = $banksInfo['data'];
 
-        $binInfo   = $paymentHelper->bin($data['cc_number']);
-        $binInfo   = $binInfo['data'];
+        if(!isset($data['bank_id'])){
+            $binInfo   = $paymentHelper->bin($data['cc_number']);
+            $binInfo   = $binInfo['data'];
+        }else{
+            $binInfo['bank_id'] = $data['bank_id'];
+        }
+
 
         $installments_commission = 0;
         foreach($banksInfo as $bank){

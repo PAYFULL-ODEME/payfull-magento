@@ -140,8 +140,17 @@ class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
             return $this;
         }
 
+        $info = $this->getInfoInstance();
+        $data = [];
+        $data['cc_number']   = $info->getCcNumber();
+        $data['installment'] = $info->getInstallment();
+
+        $commissionHelper = new T4U_Payfull_Model_Commission;
+        $commissionValue  = $commissionHelper->getCommission($data);
+
         $is3d = $this->getIs3DSecure();
         $order = $payment->getOrder();
+
         $session = Mage::getSingleton('checkout/session');
         $request = $this->buildSalePacket($payment, $amount);
         $payment->setAmount(0);
@@ -150,19 +159,11 @@ class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
         try {
             $this->validatePaymentData($request);
             $result = $this->callApi('Sale', $request, !$is3d);
-            /*$isValid3DResponse = $is3d && strpos($result, '<head>') !== false ? true : false;
-            if($isValid3DResponse) {
-                $payment->setIsTransactionClosed(false);
-                $order->setTotalPaid(0)->save();
-                Mage::getSingleton('core/session')->setPayfull([
-                    'order_id'=>$order->getIncrementId(),
-                    'secure'=>true,
-                    'amount'=>$amount,
-                    'html'=>$result
-                ]);
-            } else*/if(isset($result['status']) && $result['status']) {
+
+            if(isset($result['status']) && $result['status']) {
                 $payment->setTransactionId($result['transaction_id']);
                 Mage::getSingleton('core/session')->setPayfull(['order_id'=>$order->getIncrementId(), 'secure'=>false]);
+                $order->setTotalPaid($commissionValue);
             } else {
                 $message = isset($result['ErrorMSG']) ? $result['ErrorMSG'] : "Payment transaction failed";
                 Mage::throwException($message);

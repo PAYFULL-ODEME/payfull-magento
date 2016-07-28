@@ -47,11 +47,19 @@ class T4U_Payfull_ServiceController extends Mage_Core_Controller_Front_Action
 
         $data = $this->getRequest()->getPost();
 
-        $order_id = isset($data['passive_data']) ? $data['passive_data'] : null;
-        $session = Mage::getSingleton('checkout/session');
-        $order = Mage::getModel('sales/order')->load($order_id, 'increment_id');
-        $amount = $order->getGrandTotal();
-        $payment = $order->getPayment();
+        $order_id   = isset($data['passive_data']) ? $data['passive_data'] : null;
+        $session    = Mage::getSingleton('checkout/session');
+        $order      = Mage::getModel('sales/order')->load($order_id, 'increment_id');
+        $amount     = $order->getGrandTotal();
+        $payment    = $order->getPayment();
+
+
+        $dataToGetCommission = [];
+        $dataToGetCommission['bank_id']     = $data['bank_id'];
+        $dataToGetCommission['installment'] = $data['installments'];
+
+        $commissionHelper = new T4U_Payfull_Model_Commission;
+        $commissionValue  = $commissionHelper->getCommission($dataToGetCommission);
 
         if (isset($data['status']) && $data['status']) {
 
