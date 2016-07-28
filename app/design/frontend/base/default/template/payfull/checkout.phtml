@@ -9,8 +9,6 @@ $grandTotal         = $this->getTotal();
 $currency_code      = $this->getCurrencySymbole();
 $currency_symbol    = $this->getCurrencySymbol();
 $secure_3d          = 1;
-
-
 ?>
 <style>
     .input-cc-number-visa {
@@ -101,7 +99,6 @@ $secure_3d          = 1;
         </div>
     </li>
     <?php endif; ?>
-
     <?php  if ($installment == 1) : ?>
     <li>
         <div id="installment_table_id">
@@ -153,7 +150,7 @@ $secure_3d          = 1;
     var $options            = $('#installment_body');
     var $card_load          = $('#payfull_card_load');
 
-    $cc.keyup(function(){
+    $cc.on('keyup change keydown', function(){
         var number = $(this).val();
         cardBrandDetector(number);
         if(this.value && this.value.length == 16) {
