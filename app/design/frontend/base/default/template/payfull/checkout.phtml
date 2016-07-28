@@ -35,11 +35,11 @@ $secure_3d          = 1;
     .card_image > img {display: inline-block;width: auto;height:25px;vertical-align: middle;}
     .card_image { display: inline-block;  padding:0 5px;vertical-align: bottom;}
     .toatl_label h3 {margin: 15px 0 0 0;}
-    .install_body_label {float: left;width: 32%;height: 40px;text-align: center; border-bottom: 1px solid #d2d2d2;line-height: 40px;}
+    .install_body_label {float: left;width: 30%;height: 40px;text-align: center; border-bottom: 1px solid #d2d2d2;line-height: 40px;}
     .installment_row {/* padding-top: 10px;*/}
-    .install_body_label.installment_radio, .installmet_head .install_head_label.add_space {height: 40px;text-align: center;width: 4%;line-height: 40px;}
+    .install_body_label.installment_radio, .installmet_head .install_head_label.add_space {height: 40px;text-align: center;width: 10%;line-height: 40px;}
     #installment_table_id {background-color: #eee;border: 1px solid;border-radius: 5px;padding: 10px;margin-top: 20px;}
-    .installmet_head .install_head_label {float: left;font-weight: bold;text-align: center;width: 32%; height: 40px;line-height: 40px;border-bottom: 2px solid #d2d2d2; }
+    .installmet_head .install_head_label {float: left;font-weight: bold;text-align: center;width: 30%; height: 40px;line-height: 40px;border-bottom: 2px solid #d2d2d2; }
     .installment_body , .installment_footer {  clear: both; }
     .toatl_label {display:  none;}
 </style>
@@ -103,7 +103,7 @@ $secure_3d          = 1;
     <li>
         <div id="installment_table_id">
             <div class="installmet_head">
-                <div class="install_head_label add_space"></div>
+                <div class="install_head_label add_space"><img class="bank_photo" data-src="<?php echo $this->getSkinUrl('images/payfull/banks/'); ?>" src=""></div>
                 <div class="install_head_label"><?php echo $this->__('Installmet') ?></div>
                 <div class="install_head_label"><?php echo $this->__('Amount / Month') ?></div>
                 <div class="install_head_label"><?php echo $this->__('Total') ?></div>
@@ -149,10 +149,12 @@ $secure_3d          = 1;
     var $gateway            = $('#<?php echo $_code ?>_gateway');
     var $options            = $('#installment_body');
     var $card_load          = $('#payfull_card_load');
+    var $bank_photo          = $('.bank_photo');
 
     $cc.on('keyup change keydown', function(){
         var number = $(this).val();
         cardBrandDetector(number);
+        $bank_photo.hide();
         if(this.value && this.value.length == 16) {
             bin = this.value.substr(0, 6);
             var url = '<?php echo Mage::getUrl('payfull/service/issuer', array('_secure' => false)); ?>';
@@ -162,8 +164,13 @@ $secure_3d          = 1;
                 dataType: 'json',
                 data: {bin: bin},
                 success: function(response) {
-                    $card_load.hide();
                     refreshInstallmentOptions(response.data.bank_id);
+                    $card_load.hide();
+                    if(response.data.bank_id != ''){
+                        $bank_photo.attr('src', $bank_photo.attr('data-src')+response.data.bank_id+'.png');
+                        $bank_photo.show();
+                    }
+
                 }
             })
         }
