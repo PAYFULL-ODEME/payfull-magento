@@ -48,7 +48,12 @@ class T4U_Payfull_Block_Form_Checkout extends Mage_Payment_Block_Form
         $months = $this->getData('cc_months');
         if (is_null($months)) {
             $months[0] =  $this->__('Month');
-            $months = array_merge($months, $this->_getConfig()->getMonths());
+            $monthsFromConfig = $this->_getConfig()->getMonths();
+            foreach($monthsFromConfig as $keyInLoop=>$monthInLoop){
+                $monthNewText = (strlen($keyInLoop) == 1)?'0'.$keyInLoop:$keyInLoop;
+                $monthsFromConfig[$keyInLoop] = $monthNewText;
+            }
+            $months = array_merge($months, $monthsFromConfig);
             $this->setData('cc_months', $months);
         }
         return $months;
