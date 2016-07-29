@@ -103,7 +103,7 @@ $secure_3d          = 1;
     <li>
         <div id="installment_table_id">
             <div class="installmet_head">
-                <div class="install_head_label add_space"><img style="display: none" class="bank_photo" data-src="<?php echo $this->getSkinUrl('images/payfull/banks/'); ?>" src=""></div>
+                <div class="install_head_label add_space"><img style="display: none" class="bank_photo" data-src="<?php echo $this->getSkinUrl('images/payfull/'); ?>" src=""></div>
                 <div class="install_head_label"><?php echo $this->__('Installmet') ?></div>
                 <div class="install_head_label"><?php echo $this->__('Amount / Month') ?></div>
                 <div class="install_head_label"><?php echo $this->__('Total') ?></div>
@@ -164,10 +164,14 @@ $secure_3d          = 1;
                 dataType: 'json',
                 data: {bin: bin},
                 success: function(response) {
-                    refreshInstallmentOptions(response.data.bank_id);
+                    refreshInstallmentOptions(response.data.bank_id, response.data.type);
                     $card_load.hide();
                     if(response.data.bank_id != ''){
-                        $bank_photo.attr('src', $bank_photo.attr('data-src')+response.data.bank_id+'.png');
+                        if(response.data.type == 'CREDIT'){
+                            $bank_photo.attr('src', $bank_photo.attr('data-src')+'networks/'+response.data.bank_id+'.png');
+                        }else{
+                            $bank_photo.attr('src', $bank_photo.attr('data-src')+'banks/'+response.data.bank_id+'.png');
+                        }
                         $bank_photo.show();
                     }
 
@@ -222,13 +226,15 @@ $secure_3d          = 1;
             ;
     }
 
-    function refreshInstallmentOptions(bankName) {
+    function refreshInstallmentOptions(bankName, cardType) {
         getBankList();
         if(!banks) { return; }
         $options.show();
         $options.html('');
         $options.append(getInstallementOption(1, grandTotal, '0', currency_symbole));
         $('#enable3dsecure').show();
+
+        if(cardType != 'CREDIT') return;
 
         for (var i in banks) {
             var bank = banks[i];
