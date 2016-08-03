@@ -124,7 +124,6 @@ class T4U_Payfull_ServiceController extends Mage_Core_Controller_Front_Action
     {
         $this->passIfAjax();
         $bin = $this->getRequest()->getParam('bin');
-
         $result = $this->getPayfull()->bin($bin);
         $this->sendJson($result);
     }

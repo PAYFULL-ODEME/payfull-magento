@@ -6,23 +6,27 @@ $secure_3d          = Mage::getStoreConfig('payment/payfull/use3d_secure');
 $quote              = Mage::getModel('checkout/session')->getQuote();
 $quoteData          = $quote->getData();
 $grandTotal         = $this->getTotal();
-$currency_code      = $this->getCurrencySymbole();
-$currency_symbol    = $this->getCurrencySymbol();
+$currency_symbol    = $this->getCurrencySymbole();
 $secure_3d          = 1;
+
+$payfullHelpImagesPath = $this->getSkinUrl('images/payfull/');
+if(strpos($payfullHelpImagesPath, 'rwd') === false){
+    $payfullHelpImagesPath = str_replace('frontend/base', 'frontend/rwd', $payfullHelpImagesPath);
+}
 ?>
 <style>
     .input-cc-number-visa {
-        background: rgba(0, 0, 0, 0) url("<?php echo $this->getSkinUrl('images/payfull/payfull_creditcard_visa.png'); ?>") no-repeat scroll right center / 13% auto;
+        background: rgba(0, 0, 0, 0) url("<?php echo $payfullHelpImagesPath.'payfull_creditcard_visa.png'; ?>") no-repeat scroll right center / 13% auto !important;
         float: left;
     }
 
     .input-cc-number-master {
-        background: rgba(0, 0, 0, 0) url("<?php echo $this->getSkinUrl('images/payfull/payfull_creditcard_master.png'); ?>") no-repeat scroll right center / 13% auto;
+        background: rgba(0, 0, 0, 0) url("<?php echo $payfullHelpImagesPath.'payfull_creditcard_master.png'; ?>") no-repeat scroll right center / 13% auto !important;
         float: left;
     }
 
     .input-cc-number-not-supported {
-        background: rgba(0, 0, 0, 0) url("<?php echo $this->getSkinUrl('images/payfull/payfull_creditcard_not_supported.png'); ?>") no-repeat scroll right center / 4% auto;
+        background: rgba(0, 0, 0, 0) url("<?php echo $payfullHelpImagesPath.'payfull_creditcard_not_supported.png'; ?>") no-repeat scroll right center / 4% auto !important;
         float: left;
     }
 
@@ -61,7 +65,7 @@ $secure_3d          = 1;
     <li>
         <label for="<?php echo $_code ?>_cc_number" class="required"><em>*</em><?php echo $this->__('Credit Card Number') ?></label>
         <div class="input-box">
-            <input type="text" pattern="\d*" id="<?php echo $_code ?>_cc_number" name="payment[cc_number]" title="<?php echo $this->__('Credit Card Number') ?>" class="input-cc-number-not-supported  input-text required-entry validate-cc-number validate-cc-type" maxlength="16" value="" />
+            <input value="4355084355084358" type="text" pattern="\d*" id="<?php echo $_code ?>_cc_number" name="payment[cc_number]" title="<?php echo $this->__('Credit Card Number') ?>" class="input-cc-number-not-supported  input-text required-entry validate-cc-number validate-cc-type" maxlength="16"  />
             <span style="display: none;" class="card_loder" id="payfull_card_load">
                 <img src="<?php echo $this->getSkinUrl('images/opc-ajax-loader.gif'); ?>" />
             </span>
@@ -103,7 +107,7 @@ $secure_3d          = 1;
     <li>
         <div id="installment_table_id">
             <div class="installmet_head">
-                <div class="install_head_label add_space"><img style="display: none" class="bank_photo" data-src="<?php echo $this->getSkinUrl('images/payfull/'); ?>" src=""></div>
+                <div class="install_head_label add_space"><img style="display: none" class="bank_photo" data-src="<?php echo $payfullHelpImagesPath; ?>" src=""></div>
                 <div class="install_head_label"><?php echo $this->__('Installmet') ?></div>
                 <div class="install_head_label"><?php echo $this->__('Amount / Month') ?></div>
                 <div class="install_head_label"><?php echo $this->__('Total') ?></div>
@@ -136,80 +140,101 @@ $secure_3d          = 1;
 </ul>
 
 <script type="text/javascript">
-(function($){
 
     var banks               = false;
     var bin                 = false;
-    var currency_code       = '<?php echo $currency_code; ?>';
+    var grandTotal          = document.getElementById('grand_total').getAttribute('rel');
     var currency_symbole    = '<?php echo $currency_symbol; ?>';
-    var grandTotal          = $('#grand_total').attr('rel');
-    var $cc                 = $('#<?php echo $_code ?>_cc_number');
-    var $bank               = $('#<?php echo $_code ?>_bank_id');
-    var $has3d              = $('#<?php echo $_code ?>_has3d');
-    var $gateway            = $('#<?php echo $_code ?>_gateway');
-    var $options            = $('#installment_body');
-    var $card_load          = $('#payfull_card_load');
-    var $bank_photo          = $('.bank_photo');
+    var $cc                 = document.getElementById('<?php echo $_code ?>_cc_number');
+    var $bank               = document.getElementById('<?php echo $_code ?>_bank_id');
+    var $has3d              = document.getElementById('<?php echo $_code ?>_has3d');
+    var $gateway            = document.getElementById('<?php echo $_code ?>_gateway');
+    var $options            = document.getElementById('installment_body');
+    var $card_load          = document.getElementById('payfull_card_load');
+    var $bank_photo         = document.getElementsByClassName('bank_photo')[0];
+    var $enable3dSecure     = document.getElementById('enable3dsecure');
 
-    $cc.on('keyup change keydown', function(){
-        var number = $(this).val();
+    $cc.addEventListener('keyup', getCardBrandAndInstallmentsList, false);
+    $cc.addEventListener('change', getCardBrandAndInstallmentsList, false);
+
+    function getCardBrandAndInstallmentsList(e){
+        var target = e.target || e.srcElement;
+        var number = target.value;
         cardBrandDetector(number);
-        $bank_photo.hide();
+        $bank_photo.style.display = 'none';
+
         if(this.value && this.value.length == 16) {
             bin = this.value.substr(0, 6);
-            var url = '<?php echo Mage::getUrl('payfull/service/issuer', array('_secure' => false)); ?>';
-            $card_load.show();
-            $.ajax({
-                url: url,
-                dataType: 'json',
-                data: {bin: bin},
-                success: function(response) {
-                    refreshInstallmentOptions(response.data.bank_id, response.data.type);
-                    $card_load.hide();
+            var url = '<?php echo Mage::getUrl('payfull/service/issuer', array('_secure' => false)); ?>'+'?bin='+bin;
+            $card_load.style.display = 'block';
+
+            var xmlhttp = new XMLHttpRequest();
+            xmlhttp.open("GET", url, true);
+            xmlhttp.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+            xmlhttp.send();
+
+            xmlhttp.onreadystatechange = function() {
+                if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                    var response = JSON.parse(xmlhttp.responseText);
                     if(response.data.bank_id != ''){
+                        var bankImageSrc = $bank_photo.getAttribute('data-src');
                         if(response.data.type == 'CREDIT'){
-                            $bank_photo.attr('src', $bank_photo.attr('data-src')+'networks/'+response.data.bank_id+'.png');
+                            bankImageSrc = bankImageSrc+'networks/'+response.data.bank_id+'.png';
                         }else{
-                            $bank_photo.attr('src', $bank_photo.attr('data-src')+'banks/'+response.data.bank_id+'.png');
+                            bankImageSrc = bankImageSrc+'banks/'+response.data.bank_id+'.png';
                         }
-                        $bank_photo.show();
+                        $bank_photo.setAttribute('src', bankImageSrc);
+                        $bank_photo.style.display = 'block';
                     }
-
+                    refreshInstallmentsTable(response.data.bank_id, response.data.type);
+                    $card_load.style.display = 'none';
                 }
-            })
-        }
-    });
-
-    $('body').on("change", '.custom_field_installment_radio', function () {
-        var count = jQuery(this).attr('rel');
-        var has3D = parseInt($has3d.val());
-
-        if(count!=1 && has3D!=1) {
-            $('#enable3dsecure').hide();
-            $('#enable3dsecure input').prop("checked", false);
-        } else {
-            $('#enable3dsecure').show();
-        }
-    });
-
-    function cardBrandDetector(number) {
-        $cc.removeClass('input-cc-number-not-supported');
-        var re_visa = new RegExp("^4");
-        var re_master = new RegExp("^5[1-5]");
-        if (number.match(re_visa) != null){
-            $cc.addClass('input-cc-number-visa');
-            $cc.removeClass('input-cc-number-master');
-        }else if (number.match(re_master) != null){
-            $cc.removeClass('input-cc-number-visa');
-            $cc.addClass('input-cc-number-master');
-        }else{
-            $cc.removeClass('input-cc-number-visa');
-            $cc.removeClass('input-cc-number-master');
-            $cc.addClass('input-cc-number-not-supported');
+            };
         }
     }
 
-    function getInstallementOption(count, amount, percentage, currency) {
+    function refreshInstallmentsTable(bankName, cardType){
+        var url = '<?php echo Mage::getUrl('payfull/service/banks', array('_secure' => false)); ?>'+'?bin='+bin;
+        $card_load.style.display = 'block';
+        var xmlhttp = new XMLHttpRequest();
+        xmlhttp.open("GET", url, true);
+        xmlhttp.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+        xmlhttp.send();
+        xmlhttp.onreadystatechange = function() {
+            if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                var response = JSON.parse(xmlhttp.responseText);
+                banks = response.data;
+                buildInstallmentsTable(bankName, cardType);
+            }
+        };
+    }
+
+    function buildInstallmentsTable(bankName, cardType) {
+        if(!banks) { return; }
+        $options.style.display = 'block';
+        $options.innerHTML     = '';
+        $options.insertAdjacentHTML('beforeend', getInstallementOption(1, grandTotal, '0'));
+        $enable3dSecure.style.display = 'block';
+
+        if(cardType != 'CREDIT') return;
+
+        for (var i in banks) {
+            var bank = banks[i];
+            if (bank.bank == bankName) {
+                $bank.value    = bank.bank;
+                $has3d.value   = bank.has3d;
+                $gateway.value = bank.gateway;
+                for (item of bank.installments) {
+                    $options.insertAdjacentHTML('beforeend', getInstallementOption(parseInt(item.count), grandTotal, item.commission));
+                }
+                break;
+            }
+        }
+
+        createEventListenerToInstallment();
+    }
+
+    function getInstallementOption(count, amount, percentage) {
         var commession = percentage.replace('%', '');
         var total = parseFloat(amount) * (1 + parseFloat(commession) / 100);
         var pmon = total / count;
@@ -220,47 +245,57 @@ $secure_3d          = 1;
             + '<input rel="'+count+'" class="custom_field_installment_radio" type="radio" '+checked+' name="payment[installment]" value="'+count+'" />'
             + '</div>'
             + '<div class="install_body_label installment_lable_code">'+count+'</div>'
-            + '<div class="install_body_label">' + currency +' '+ pmon.toFixed(2) + '</div>'
-            + '<div rel="' + total + '" class="install_body_label final_commi_price">' + currency +' '+ parseFloat(total).toFixed(2) + '</div>'
+            + '<div class="install_body_label"> '+currency_symbole+ pmon.toFixed(2) + '</div>'
+            + '<div rel="' + total + '" class="install_body_label final_commi_price"> ' + currency_symbole + parseFloat(total).toFixed(2) + '</div>'
             + '</div>'
             ;
     }
 
-    function refreshInstallmentOptions(bankName, cardType) {
-        getBankList();
-        if(!banks) { return; }
-        $options.show();
-        $options.html('');
-        $options.append(getInstallementOption(1, grandTotal, '0', currency_symbole));
-        $('#enable3dsecure').show();
-
-        if(cardType != 'CREDIT') return;
-
-        for (var i in banks) {
-            var bank = banks[i];
-            if (bank.bank == bankName) {
-                var opt, t, fee;
-                $bank.val(bank.bank);
-                $has3d.val(bank.has3d);
-                $gateway.val(bank.gateway);
-                $.each(bank.installments, function (i, item) {
-                    $options.append(getInstallementOption(parseInt(item.count), grandTotal, item.commission, currency_symbole));
-                });
-                break;
-            }
+    function cardBrandDetector(number) {
+        removeClassFromElement($cc, 'input-cc-number-not-supported');
+        var re_visa = new RegExp("^4");
+        var re_master = new RegExp("^5[1-5]");
+        if (number.match(re_visa) != null){
+            addClassToElement($cc, 'input-cc-number-visa');
+            removeClassFromElement($cc, 'input-cc-number-master');
+        }else if (number.match(re_master) != null){
+            addClassToElement($cc, 'input-cc-number-master');
+            removeClassFromElement($cc, 'input-cc-number-visa');
+        }else{
+            addClassToElement($cc, 'input-cc-number-not-supported');
+            removeClassFromElement($cc, 'input-cc-number-visa');
+            removeClassFromElement($cc, 'input-cc-number-master');
         }
     }
 
-    function getBankList(){
-        var url = '<?php echo Mage::getUrl('payfull/service/banks', array('_secure' => false)); ?>';
-        $.ajax({
-            url: url,
-            dataType: 'json',
-            data: {bin: bin},
-            success: function(response){
-                banks = response.data;
-            }
-        });
+    function addClassToElement(element, className) {
+        element.className += ' '+className;
     }
-})(jQuery);
+
+    function removeClassFromElement(element, className) {
+        var currentClasses = element.className;
+        element.className = currentClasses.replace(className, "");
+    }
+
+    function createEventListenerToInstallment(){
+        var $installmentRadio = document.getElementsByClassName('custom_field_installment_radio');
+        for (var i = 0; i < $installmentRadio.length; i++) {
+            $installmentRadio[i].addEventListener('click', showHide3D, false);
+        }
+    }
+
+    function showHide3D(e) {
+        var target = e.target || e.srcElement;
+        var count = target.getAttribute('rel');
+        var has3D = parseInt($has3d.value);
+
+        if(count!=1 && has3D!=1) {
+            $enable3dSecure.style.display = 'none';
+            $has3d.checked = false;
+        } else {
+            $enable3dSecure.style.display = 'block';
+        }
+    }
+
+
 </script>
