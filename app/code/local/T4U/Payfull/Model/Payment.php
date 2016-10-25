@@ -324,7 +324,7 @@ class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
     }
 
     protected function checkCCEXPDate($month, $year){
-        if(strtotime('01/'.$month.'/'.$year) <= time()){
+        if(strtotime('01-'.$month.'-'.$year) <= time()){
             throw new Exception(__('Incorrect credit card expiration date.'));
         }
         return true;
