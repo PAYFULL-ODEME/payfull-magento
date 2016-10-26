@@ -143,8 +143,7 @@ if(strpos($payfullHelpImagesPath, 'rwd') === false){
 
 <script type="text/javascript">
 
-    var banks               = false;
-    var bin                 = false;
+    banks                   = false;
     var grandTotal          = document.getElementById('grand_total').getAttribute('rel');
     var currency_symbole    = '<?php echo $currency_symbol; ?>';
     var $cc                 = document.getElementById('<?php echo $_code ?>_cc_number');
@@ -155,19 +154,31 @@ if(strpos($payfullHelpImagesPath, 'rwd') === false){
     var $card_load          = document.getElementById('payfull_card_load');
     var $bank_photo         = document.getElementsByClassName('bank_photo')[0];
     var $enable3dSecure     = document.getElementById('enable3dsecure');
+    BIN_GLOBAL_FOR_CARD     = '00000';
+    INSTALMENTS_RESET       = true;
+    BIN                     = false;
 
     $cc.addEventListener('keyup', getCardBrandAndInstallmentsList, false);
     $cc.addEventListener('change', getCardBrandAndInstallmentsList, false);
 
     function getCardBrandAndInstallmentsList(e){
         var target = e.target || e.srcElement;
-        var number = target.value;
-        cardBrandDetector(number);
+        BIN        = target.value;
+        BIN = BIN.replace(/ /g,'');
+        cardBrandDetector(BIN);
         $bank_photo.style.display = 'none';
 
-        if(this.value && this.value.length == 16) {
-            bin = this.value.substr(0, 6);
-            var url = '<?php echo Mage::getUrl('payfull/service/issuer', array('_secure' => false)); ?>'+'?bin='+bin;
+        if(BIN.length > 5) {
+            BIN = this.value.substr(0, 6);
+            if(BIN == BIN_GLOBAL_FOR_CARD){
+                return;
+            }else{
+                BIN_GLOBAL_FOR_CARD = BIN;
+                INSTALMENTS_RESET   = true;
+            }
+
+
+            var url = '<?php echo Mage::getUrl('payfull/service/issuer', array('_secure' => false)); ?>'+'?bin='+BIN;
             $card_load.style.display = 'block';
 
             var xmlhttp = new XMLHttpRequest();
@@ -187,28 +198,23 @@ if(strpos($payfullHelpImagesPath, 'rwd') === false){
                         }
                         $bank_photo.setAttribute('src', bankImageSrc);
                         $bank_photo.style.display = 'block';
+                        banks = response.data;
                     }
-                    refreshInstallmentsTable(response.data.bank_id, response.data.type);
+                    refreshInstallmentsTable(response.data.bank_id, response.data.type, banks);
                     $card_load.style.display = 'none';
                 }
             };
+        }else{
+            BIN_GLOBAL_FOR_CARD = BIN;
+            if(INSTALMENTS_RESET){
+                INSTALMENTS_RESET = false;
+                refreshInstallmentsTable('', '');
+            }
         }
     }
 
     function refreshInstallmentsTable(bankName, cardType){
-        var url = '<?php echo Mage::getUrl('payfull/service/banks', array('_secure' => false)); ?>'+'?bin='+bin;
-        $card_load.style.display = 'block';
-        var xmlhttp = new XMLHttpRequest();
-        xmlhttp.open("GET", url, true);
-        xmlhttp.setRequestHeader("X-Requested-With", "XMLHttpRequest");
-        xmlhttp.send();
-        xmlhttp.onreadystatechange = function() {
-            if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-                var response = JSON.parse(xmlhttp.responseText);
-                banks = response.data;
-                buildInstallmentsTable(bankName, cardType);
-            }
-        };
+        buildInstallmentsTable(bankName, cardType);
     }
 
     function buildInstallmentsTable(bankName, cardType) {
@@ -217,7 +223,6 @@ if(strpos($payfullHelpImagesPath, 'rwd') === false){
         $options.innerHTML     = '';
         $options.insertAdjacentHTML('beforeend', getInstallementOption(1, grandTotal, '0'));
         $enable3dSecure.style.display = 'block';
-
         if(cardType != 'CREDIT') return;
 
         for (var i in banks) {
@@ -232,7 +237,6 @@ if(strpos($payfullHelpImagesPath, 'rwd') === false){
                 break;
             }
         }
-
         createEventListenerToInstallment();
     }
 
