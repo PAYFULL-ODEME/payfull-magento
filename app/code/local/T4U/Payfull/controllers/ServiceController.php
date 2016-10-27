@@ -141,6 +141,9 @@ class T4U_Payfull_ServiceController extends Mage_Core_Controller_Front_Action
         if ($this->getRequest()->isXmlHttpRequest()) {
             return true;
         }
+        if ($this->getParam('ajax') || $this->getParam('isAjax')) {
+            return true;
+        }
         throw new Exception("Cannot process non-ajax request.");
     }
 }

@@ -186,6 +186,7 @@ if(strpos($payfullHelpImagesPath, 'rwd') === false){
             var xmlhttp = new XMLHttpRequest();
             xmlhttp.open("GET", url, true);
             xmlhttp.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+            xmlhttp.setRequestHeader("X_REQUESTED_WITH", "XMLHttpRequest");
             xmlhttp.send();
 
             xmlhttp.onreadystatechange = function() {
@@ -200,9 +201,8 @@ if(strpos($payfullHelpImagesPath, 'rwd') === false){
                         }
                         $bank_photo.setAttribute('src', bankImageSrc);
                         $bank_photo.style.display = 'block';
-                        banks = response.data;
                     }
-                    refreshInstallmentsTable(response.data.bank_id, response.data.type, banks);
+                    refreshInstallmentsTable(response.data.bank_id, response.data.type);
                     $card_load.style.display = 'none';
                 }
             };
@@ -212,6 +212,7 @@ if(strpos($payfullHelpImagesPath, 'rwd') === false){
                 INSTALMENTS_RESET = false;
                 refreshInstallmentsTable('', '');
             }
+            $card_load.style.display = 'none';
         }
     }
 
@@ -220,25 +221,36 @@ if(strpos($payfullHelpImagesPath, 'rwd') === false){
     }
 
     function buildInstallmentsTable(bankName, cardType) {
-        if(!banks) { return; }
-        $options.style.display = 'block';
         $options.innerHTML     = '';
         $options.insertAdjacentHTML('beforeend', getInstallementOption(1, grandTotal, '0'));
-        $enable3dSecure.style.display = 'block';
-        if(cardType != 'CREDIT') return;
 
-        for (var i in banks) {
-            var bank = banks[i];
-            if (bank.bank == bankName) {
-                $bank.value    = bank.bank;
-                $has3d.value   = bank.has3d;
-                $gateway.value = bank.gateway;
-                for (item of bank.installments) {
-                    $options.insertAdjacentHTML('beforeend', getInstallementOption(parseInt(item.count), grandTotal, item.commission));
+        var url = '<?php echo Mage::getUrl('payfull/service/banks', array('_secure' => false)); ?>'+'?bin='+BIN;
+        $card_load.style.display = 'block';
+        var xmlhttp = new XMLHttpRequest();
+        xmlhttp.open("GET", url, true);
+        xmlhttp.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+        xmlhttp.send();
+        xmlhttp.onreadystatechange = function() {
+            if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                var response = JSON.parse(xmlhttp.responseText);
+                banks        = response.data;
+                if(cardType != 'CREDIT') return;
+
+                for (var i in banks) {
+                    var bank = banks[i];
+                    if (bank.bank == bankName) {
+                        $bank.value    = bank.bank;
+                        $has3d.value   = bank.has3d;
+                        $gateway.value = bank.gateway;
+                        for (item of bank.installments) {
+                            $options.insertAdjacentHTML('beforeend', getInstallementOption(parseInt(item.count), grandTotal, item.commission));
+                        }
+                        break;
+                    }
                 }
-                break;
+                $card_load.style.display = 'none';
             }
-        }
+        };
         createEventListenerToInstallment();
     }
 
