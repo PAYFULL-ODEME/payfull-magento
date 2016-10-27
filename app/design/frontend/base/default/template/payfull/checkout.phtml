@@ -168,7 +168,6 @@ if(strpos($payfullHelpImagesPath, 'rwd') === false){
         BIN        = target.value;
         BIN = BIN.replace(/ /g,'');
         cardBrandDetector(BIN);
-        $bank_photo.style.display = 'none';
 
         if(BIN.length > 5) {
             BIN = this.value.substr(0, 6);
@@ -212,7 +211,8 @@ if(strpos($payfullHelpImagesPath, 'rwd') === false){
                 INSTALMENTS_RESET = false;
                 refreshInstallmentsTable('', '');
             }
-            $card_load.style.display = 'none';
+            $card_load.style.display  = 'none';
+            $bank_photo.style.display = 'none';
         }
     }
 
@@ -249,9 +249,9 @@ if(strpos($payfullHelpImagesPath, 'rwd') === false){
                     }
                 }
                 $card_load.style.display = 'none';
+                createEventListenerToInstallment();
             }
         };
-        createEventListenerToInstallment();
     }
 
     function getInstallementOption(count, amount, percentage) {
