@@ -1,12 +1,11 @@
 <?php
 
 class T4U_Payfull_Model_Commission extends Mage_Sales_Model_Quote_Address_Total_Abstract {
+    protected $_code = 'commission';
 
     public function collect(Mage_Sales_Model_Quote_Address $address) {
-
         parent::collect($address);
 
-        
         $this->_setAmount(0);
         $this->_setBaseAmount(0);
 
@@ -17,12 +16,13 @@ class T4U_Payfull_Model_Commission extends Mage_Sales_Model_Quote_Address_Total_
 
         if (isset($_REQUEST['payment']) && $_REQUEST['payment'] != '' AND $_REQUEST['payment']['installment'] > 1) {
             $exist_amount   = $quote->getFeeAmount();
-            $fee            = $this->getCommission($_REQUEST["payment"]);
-            $balance        = $fee - $exist_amount;
-            $address->setFeeAmount($balance);
-            $address->setBaseFeeAmount($balance);
 
-            $quote->setFeeAmount($balance);
+            $fee            = $this->getCommission($_REQUEST["payment"]);
+            $commission     = $fee - $exist_amount;
+            $address->setFeeAmount($commission);
+            $address->setBaseFeeAmount($commission);
+
+            $quote->setFeeAmount($commission);
 
             $address->setGrandTotal($address->getGrandTotal() + $address->getFeeAmount());
             $address->setBaseGrandTotal($address->getBaseGrandTotal() + $address->getBaseFeeAmount());
@@ -36,14 +36,14 @@ class T4U_Payfull_Model_Commission extends Mage_Sales_Model_Quote_Address_Total_
     {
         $amt = $address->getFeeAmount();
         $address->addTotal(array(
-            'code'=>$this->getCode(),
-            'title'=>__('Installment Commission'),
-            'value'=> $amt
+            'code'  => $this->getCode(),
+            'title' => __('Installment Commission'),
+            'value' => $amt
         ));
         return $this;
     }
 
-    public function getCommission($data) {
+    public function getCommission($data) {return '10';
         $quote = Mage::getModel('checkout/session')->getQuote();
         $totals = $quote->getTotals();
         $grand_total = 0;
@@ -80,6 +80,7 @@ class T4U_Payfull_Model_Commission extends Mage_Sales_Model_Quote_Address_Total_
         }
 
         $subTotalValue = $grand_total * ($installments_commission/100);
+        $subTotalValue = number_format($subTotalValue, 2, '.', '');
         return $subTotalValue;
     }
 }

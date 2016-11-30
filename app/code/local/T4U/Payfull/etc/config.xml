@@ -54,6 +54,9 @@
             <installment>
                 <to_order_payment>*</to_order_payment>
             </installment>
+            <extra_installment>
+                <to_order_payment>*</to_order_payment>
+            </extra_installment>
             <use3d_secure>
                 <to_order_payment>*</to_order_payment>
             </use3d_secure>
