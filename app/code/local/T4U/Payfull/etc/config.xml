@@ -2,7 +2,7 @@
 <config>
   <modules>
     <T4U_Payfull>
-      <version>1.0.0</version>
+      <version>1.0.2</version>
     </T4U_Payfull>
   </modules>
 	<default>
@@ -66,6 +66,9 @@
             <gateway>
                 <to_order_payment>*</to_order_payment>
             </gateway>
+            <use_bkm>
+                <to_order_payment>*</to_order_payment>
+            </use_bkm>
         </sales_convert_quote_payment>
     </fieldsets>
     <fieldsets>

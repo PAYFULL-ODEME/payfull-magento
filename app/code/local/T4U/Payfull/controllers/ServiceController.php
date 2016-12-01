@@ -27,7 +27,6 @@ class T4U_Payfull_ServiceController extends Mage_Core_Controller_Front_Action
         $html = $payfull['html'];
         unset($payfull['html']);
         // Mage::getSingleton('core/session')->setPayfull($payfull);
-
         $order = Mage::getModel('sales/order')->load($payfull['order_id'], 'increment_id');
         $order->setTotalPaid(0);
         $order->setState(Mage_Sales_Model_Order::STATE_PENDING_PAYMENT, true, "Waiting to complete 3D secure process.");

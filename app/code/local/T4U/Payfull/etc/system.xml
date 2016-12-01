@@ -78,6 +78,15 @@
               <show_in_store>0</show_in_store>
               <sort_order>7</sort_order>
             </use3d_secure>
+            <use_bkm translate="label">
+              <label>Enable BKM Express</label>
+              <frontend_type>select</frontend_type>
+              <source_model>adminhtml/system_config_source_yesno</source_model>
+              <show_in_default>1</show_in_default>
+              <show_in_website>1</show_in_website>
+              <show_in_store>0</show_in_store>
+              <sort_order>7</sort_order>
+            </use_bkm>
             <!-- order_status translate="label">
               <label>Order status</label>
               <frontend_type>select</frontend_type>

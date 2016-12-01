@@ -3,6 +3,11 @@
 class T4U_Payfull_Model_Commission extends Mage_Sales_Model_Quote_Address_Total_Abstract {
     protected $_code = 'commission';
 
+    public function __construct()
+    {
+        $this->setCode($this->_code);
+    }
+
     public function collect(Mage_Sales_Model_Quote_Address $address) {
         parent::collect($address);
 
@@ -37,13 +42,13 @@ class T4U_Payfull_Model_Commission extends Mage_Sales_Model_Quote_Address_Total_
         $amt = $address->getFeeAmount();
         $address->addTotal(array(
             'code'  => $this->getCode(),
-            'title' => __('Installment Commission'),
+            'title' => __('Commission'),
             'value' => $amt
         ));
         return $this;
     }
 
-    public function getCommission($data) {return '10';
+    public function getCommission($data) {
         $quote = Mage::getModel('checkout/session')->getQuote();
         $totals = $quote->getTotals();
         $grand_total = 0;
@@ -65,8 +70,9 @@ class T4U_Payfull_Model_Commission extends Mage_Sales_Model_Quote_Address_Total_
             $binInfo['bank_id'] = $data['bank_id'];
         }
 
-
         $installments_commission = 0;
+        if($binInfo['bank_id'] == 'BKMExpress') return 0;
+
         foreach($banksInfo as $bank){
             if($bank['bank'] == $binInfo['bank_id']){
                 foreach($bank['installments'] as $installment){

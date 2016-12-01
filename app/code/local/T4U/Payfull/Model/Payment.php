@@ -36,13 +36,19 @@ class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
 
     public function getConfigPaymentAction()
     {
-        return $this->getIs3DSecure() ? 'order' :'authorize_capture';
+        return ($this->getIs3DSecure() OR $this->getIsBkm()) ? 'order' :'authorize_capture';
     }
 
     protected function getIs3DSecure()
     {
         $info = $this->getInfoInstance();
         return $this->getConfigData('use3d_secure') ? $info->getUse3dSecure() : false;
+    }
+
+    protected function getIsBkm()
+    {
+        $info = $this->getInfoInstance();
+        return $this->getConfigData('use_bkm') ? $info->getUseBkm() : false;
     }
 
     public function assignData($data)
@@ -70,6 +76,10 @@ class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
 
         $info->setUse3dSecure($data->getUse3dSecure()==1);
 
+        if ($data->getUseBkm()) {
+            $info->setUseBkm($data->getUseBkm());
+        }
+
         $info->setCcType($data->getCcType())
             ->setCcOwner($data->getCcOwner())
             ->setCcLast4(substr($data->getCcNumber(), -4))
@@ -87,7 +97,7 @@ class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
     
     public function getOrderPlaceRedirectUrl()
     {
-        if($this->getIs3DSecure()) {
+        if($this->getIs3DSecure() OR $this->getIsBkm()) {
             return Mage::getUrl('payfull/service/redirect', array(
                 '_secure' => false
             ));
@@ -98,8 +108,9 @@ class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
 
     public function order(Varien_Object $payment, $amount)
     {
-        if(!$this->getIs3DSecure()) {
-            Mage::throwException("Authorize method can be used only with 3D secure transaction.");
+
+        if(!$this->getIs3DSecure() AND !$this->getIsBkm()) {
+            Mage::throwException("Authorize method can be used only with 3D secure transaction or BKM Express.");
             return $this;
         }
 
@@ -110,7 +121,7 @@ class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
         try {
             $this->validatePaymentData($request);
             $result = $this->callApi('Sale', $request, false);
-            $isValid3DResponse = strpos($result, '<head>') !== false ? true : false; // response has HTML content
+            $isValid3DResponse = strpos($result, '<html') !== false ? true : false; // response has HTML content
             if($isValid3DResponse) {
                 $payment->setIsTransactionClosed(false);
                 $order->setTotalPaid(0)->save();
@@ -121,7 +132,12 @@ class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
                 ]);
             } else {
                 $result = Mage::helper('core')->jsonDecode($result);
-                $message = isset($result['ErrorMSG']) ? $result['ErrorMSG'] : "3D secure transaction failed";
+                if($this->getIsBkm()){
+                    $message = isset($result['ErrorMSG']) ? $result['ErrorMSG'] : "BKM Express transaction failed";
+                }else{
+                    $message = isset($result['ErrorMSG']) ? $result['ErrorMSG'] : "3D secure transaction failed";
+                }
+
                 Mage::throwException($message);
                 return $this;
             }
@@ -134,8 +150,7 @@ class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
 
     public function capture(Varien_Object $payment, $amount)
     {
-        if($this->getIs3DSecure()) {
-            echo "you are here ;)";exit;
+        if($this->getIs3DSecure() OR $this->getIsBkm()) {
             Mage::throwException("Capture method cannot be used with 3D secure transaction.");
             return $this;
         }
@@ -148,7 +163,7 @@ class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
         $commissionHelper = new T4U_Payfull_Model_Commission;
         $commissionValue  = $commissionHelper->getCommission($data);
 
-        $is3d = $this->getIs3DSecure();
+        $is3d  = $this->getIs3DSecure();
         $order = $payment->getOrder();
 
         $session = Mage::getSingleton('checkout/session');
@@ -229,11 +244,13 @@ class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
 
     protected function buildSalePacket($payment, $total)
     {
-        $order = $payment->getOrder();
-        $currency = $order->getBaseCurrencyCode();
-        $billAddress = $order->getBillingAddress();
-        $installment = $this->getConfigData('use_installment') ? $payment->getInstallment() : 1;
-		
+        $order          = $payment->getOrder();
+        $currency       = $order->getBaseCurrencyCode();
+        $billAddress    = $order->getBillingAddress();
+        $installment    = $this->getConfigData('use_installment') ? $payment->getInstallment() : 1;
+        $use_bkm        = $this->getIsBkm();
+        $return_url     = Mage::getUrl('payfull/service/response', array('_secure' => false));
+
 		$store = Mage::app()->getStore();
 		$payment_title = "{$store->getName()}: total $total [$currency]";
 
@@ -260,7 +277,20 @@ class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
         }
         if ($this->getIs3DSecure()) {
             $request['use3d'] = 1;
-            $request['return_url'] = Mage::getUrl('payfull/service/response', array('_secure' => false));
+            $request['return_url'] = $return_url;
+        }
+        if($use_bkm){
+            unset($request['use3d']);
+            unset($request['gateway']);
+
+            $request['cc_name']       = '';
+            $request['cc_number']     = '';
+            $request['cc_month']      = '';
+            $request['cc_year']       = '';
+            $request['cc_cvc']        = '';
+            $request['bank_id']       = 'BKMExpress';
+            $request['return_url']    = $return_url;
+            $request['installments']  = $this->getConfigData('use_installment') ? 1 : 0;
         }
         return $request;
     }
@@ -284,9 +314,11 @@ class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
     protected function validatePaymentData($data)
     {
         try {
-            $this->checkCCNumber($data["cc_number"]);
-            $this->checkCCCVC($data["cc_number"], $data["cc_cvc"]);
-            $this->checkCCEXPDate($data["cc_month"], $data["cc_year"]);
+            if(!isset($data["bank_id"]) OR ($data["bank_id"] != 'BKMExpress')){
+                $this->checkCCNumber($data["cc_number"]);
+                $this->checkCCCVC($data["cc_number"], $data["cc_cvc"]);
+                $this->checkCCEXPDate($data["cc_month"], $data["cc_year"]);
+            }
         } catch (\Exception $ex) {
             Mage::throwException($ex->getMessage());
         }
