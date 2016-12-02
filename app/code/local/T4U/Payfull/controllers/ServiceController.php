@@ -141,9 +141,11 @@ class T4U_Payfull_ServiceController extends Mage_Core_Controller_Front_Action
         $bankId = isset($issuer['data']['bank_id'])?$issuer['data']['bank_id']:'';
 
         $bank_info = [];
-        foreach($result['data'] as $temp) {
+        foreach($result['data'] as $index=>$temp) {
             if($temp['bank'] == $bankId) {
-                $bank_info = $temp;
+                $bank_info  = $temp;
+                $bank_index = $index;
+
                 break;
             }
         }
@@ -164,13 +166,16 @@ class T4U_Payfull_ServiceController extends Mage_Core_Controller_Front_Action
             }
         }
 
-        foreach($bank_info['installments'] as $justNormalKey=>$installment){
-            if(isset($extraInstallmentsAndInstallmentsArr[$installment['count']])) $bank_info['installments'][$justNormalKey]['hasExtra'] = '1';
-            else																   $bank_info['installments'][$justNormalKey]['hasExtra'] = '0';
+        if(Mage::getStoreConfig('payment/payfull/use_extra_installment')){
+            foreach($bank_info['installments'] as $justNormalKey=>$installment){
+                if(isset($extraInstallmentsAndInstallmentsArr[$installment['count']])) $bank_info['installments'][$justNormalKey]['hasExtra'] = '1';
+                else																   $bank_info['installments'][$justNormalKey]['hasExtra'] = '0';
+            }
         }
 
-        $result['data']   = [];
-        $result['data'][] = $bank_info;
+        if(isset($bank_index)){
+            $result['data'][$bank_index] = $bank_info;
+        }
 
         $this->sendJson($result);
     }
@@ -178,6 +183,12 @@ class T4U_Payfull_ServiceController extends Mage_Core_Controller_Front_Action
     public function extraInstallmentsAction()
     {
         $this->passIfAjax();
+        if(!Mage::getStoreConfig('payment/payfull/use_extra_installment')){
+            $extra_installments_info = [];
+            $extra_installments_info['extra_inst'] = '';
+            $this->sendJson($extra_installments_info);
+            return;
+        }
 
         $total          = $this->getRequest()->getParam('total');
         $currency       = $this->getRequest()->getParam('currency');

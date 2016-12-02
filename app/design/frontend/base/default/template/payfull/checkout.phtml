@@ -273,6 +273,7 @@ if(strpos($payfullHelpImagesPath, 'rwd') === false){
 
     function buildInstallmentsTable(bankName, cardType) {
         $options.innerHTML     = '';
+        removeExtraInstallments();
         var total      = '<?php echo $grandTotal; ?>';
         var currency   = '<?php echo $currency; ?>';
         var url_params = '?bin='+BIN+'&total='+total+'&currency='+currency;
