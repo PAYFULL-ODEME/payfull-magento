@@ -131,8 +131,71 @@ class T4U_Payfull_ServiceController extends Mage_Core_Controller_Front_Action
     {
         $this->passIfAjax();
 
+        //get info from API about extra instalments
+        $total          = $this->getRequest()->getParam('total');
+        $currency       = $this->getRequest()->getParam('currency');
+        $bin            = $this->getRequest()->getParam('bin');
+
         $result = $this->getPayfull()->banks();
+        $issuer = $this->getPayfull()->bin($bin);
+        $bankId = isset($issuer['data']['bank_id'])?$issuer['data']['bank_id']:'';
+
+        $bank_info = [];
+        foreach($result['data'] as $temp) {
+            if($temp['bank'] == $bankId) {
+                $bank_info = $temp;
+                break;
+            }
+        }
+        $gateway = isset($bank_info['gateway'])?$bank_info['gateway']:'';
+
+        $extraInstallmentsAndInstallmentsArr = [];
+        $extra_installments_info 	         = $this->getPayfull()->extraInstallmentsList($currency);
+        if(isset($extra_installments_info['data']['campaigns'])) {
+            foreach($extra_installments_info['data']['campaigns'] as $extra_installments_row){
+                if(
+                    $extra_installments_row['bank_id']           == $bankId AND
+                    $extra_installments_row['min_amount']        < ($total*$extra_installments_info['data']['exchange_rate']) AND
+                    $extra_installments_row['status']            == 1 AND
+                    $extra_installments_row['gateway']           == $gateway
+                ){
+                    $extraInstallmentsAndInstallmentsArr[$extra_installments_row['base_installments']] = true;
+                }
+            }
+        }
+
+        foreach($bank_info['installments'] as $justNormalKey=>$installment){
+            if(isset($extraInstallmentsAndInstallmentsArr[$installment['count']])) $bank_info['installments'][$justNormalKey]['hasExtra'] = '1';
+            else																   $bank_info['installments'][$justNormalKey]['hasExtra'] = '0';
+        }
+
+        $result['data']   = [];
+        $result['data'][] = $bank_info;
+
         $this->sendJson($result);
+    }
+
+    public function extraInstallmentsAction()
+    {
+        $this->passIfAjax();
+
+        $total          = $this->getRequest()->getParam('total');
+        $currency       = $this->getRequest()->getParam('currency');
+        $installments   = $this->getRequest()->getParam('installments');
+        $bankId         = $this->getRequest()->getParam('bankId');
+        $gateway        = $this->getRequest()->getParam('gateway');
+
+        $extra_installments_info = $this->getPayfull()->extraInstallments($total, $currency, $installments, $bankId, $gateway);
+        $extra_installments_info['extra_inst'] = '';
+
+        //no correct response
+        if(isset($extra_installments_info['data']['campaigns'])) {
+            foreach($extra_installments_info['data']['campaigns'] as $extra_installments_row){
+                $extra_installments_info['extra_inst'] = isset($extra_installments_info['extra_inst'])?$extra_installments_info['extra_inst']:[];
+                $extra_installments_info['extra_inst'][$extra_installments_row['extra_installments']] = $extra_installments_row['campaign_id'];
+            }
+        }
+        $this->sendJson($extra_installments_info);
     }
 
     protected function passIfAjax()

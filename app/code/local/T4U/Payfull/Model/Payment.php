@@ -233,6 +233,27 @@ class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
         ]);
     }
 
+    public function extraInstallments($total, $currency, $installments, $bankId, $gateway)
+    {
+        return $this->callApi('Get', [
+            'get_param'       => 'ExtraInstallments',
+            "total"           => $total,
+            "currency"        => $currency,
+            "bank_id"         => $bankId,
+            "gateway"         => $gateway,
+            "installments"    => $installments,
+        ]);
+    }
+
+    public function extraInstallmentsList($currency)
+    {
+        return $this->callApi('Get', [
+            'get_param'       => 'ExtraInstallmentsList',
+            "exchange_rate"   => 1,
+            "currency"        => $currency,
+        ]);
+    }
+
     public function test()
     {
         $conf = $this->getConfigData('endpoint');

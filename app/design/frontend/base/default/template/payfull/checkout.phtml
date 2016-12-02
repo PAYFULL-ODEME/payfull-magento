@@ -8,6 +8,7 @@ $quote                = Mage::getModel('checkout/session')->getQuote();
 $quoteData            = $quote->getData();
 $grandTotal           = $this->getTotal();
 $currency_symbol      = $this->getCurrencySymbole();
+$currency             = $this->getCurrencyCode();
 $text_credit_card     = $this->__('Credit card/Debit card');
 $text_bkm_explanation =  $this->__('BKM Express ile ödeme yaparken www.bkmexpress.com.tr sayfasına yönlendirileceksiniz.
                             BKM Express sitesine üye olurken kullandığınız kullanıcı adı ve şifreniz ile uygulamaya giriş yapmanız gerekmektedir.
@@ -47,7 +48,7 @@ if(strpos($payfullHelpImagesPath, 'rwd') === false){
     .install_body_label {float: left;width: 30%;height: 40px;text-align: center; border-bottom: 1px solid #d2d2d2;line-height: 40px;}
     .installment_row {/* padding-top: 10px;*/}
     .install_body_label.installment_radio, .installmet_head .install_head_label.add_space {height: 40px;text-align: center;width: 10%;line-height: 40px;}
-    #installment_table_id {background-color: #eee;border: 1px solid;border-radius: 5px;padding: 10px;margin-top: 20px;}
+    #installment_table_id {background-color: #eee;border: 1px solid;border-radius: 5px;padding: 10px;margin-top: 20px; max-width: 97%}
     .installmet_head .install_head_label {float: left;font-weight: bold;text-align: center;width: 30%; height: 40px;line-height: 40px;border-bottom: 2px solid #d2d2d2; }
     .installment_body , .installment_footer {  clear: both; }
     .toatl_label {display:  none;}
@@ -55,6 +56,7 @@ if(strpos($payfullHelpImagesPath, 'rwd') === false){
     .full-width { width: 100% !important;}
     #enable3dsecure label {  margin-top: 10px;}
     #payfull_use3d_secure {  margin-top: 10px; margin-right: 10px;}
+    .joker {  border-radius: 25px;  font-weight: 600;  padding: 3px 10px;  background: #ff9800;  color: white;  text-transform: uppercase;  }
     /* Style the list */
     ul.tab {  list-style-type: none;  margin: 0;  padding: 0;  overflow: hidden;  border: 1px solid #ccc;  background-color: #f1f1f1;  }
     /* Float the list items side by side */
@@ -148,7 +150,7 @@ if(strpos($payfullHelpImagesPath, 'rwd') === false){
                     <div class="installment_body" id="installment_body">
                         <div class="installment_row">
                             <div class="install_body_label installment_radio"><input rel="1" type="radio" class="installment_radio" checked name="payment[installment]" value="1" /></div>
-                            <div class="install_body_label installment_lable_code">1</div>
+                            <div class="install_body_label installment_lable_code"> <?php echo $this->__('One Shot'); ?></div>
                             <div class="install_body_label"><?php echo Mage::helper('core')->currency($grandTotal, true, false); ?></div>
                             <div class="install_body_label final_commi_price" rel="<?php echo $grandTotal; ?>"><?php echo Mage::helper('core')->currency($grandTotal, true, false); ?></div>
                         </div>
@@ -160,14 +162,21 @@ if(strpos($payfullHelpImagesPath, 'rwd') === false){
                 <input id="<?php echo $_code ?>_gateway" type="hidden" title="<?php echo $this->__('Gateway') ?>" name="payment[gateway]" value="<?php echo $this->htmlEscape($this->getInfoData('gateway')) ?>" />
             </li>
             <?php endif; ?>
+            <li class="extra_installments_container" style="display: none;">
+                <div class="input-box full-width">
+                    <label><?php echo $this->__('Extra Installments') ?>
+                        <div class="extra_installments_select"></div>
+                    </label>
+                </div>
+            </li>
             <?php if ($secure_3d == 1) : ?>
-        <li class="td_secure" id="enable3dsecure">
-            <div class="input-box full-width">
-                <input class="use3d_secure_class" type="checkbox" id="<?php echo $_code ?>_use3d_secure" value="1" name="payment[use3d_secure]" />
-                <label for="<?php echo $_code ?>_use3d_secure"> <?php echo $this->__('Use 3D secure Payments System') ?></label>
-            </div>
-        </li>
-    <?php endif; ?>
+            <li class="td_secure" id="enable3dsecure">
+                <div class="input-box full-width">
+                    <input class="use3d_secure_class" type="checkbox" id="<?php echo $_code ?>_use3d_secure" value="1" name="payment[use3d_secure]" />
+                    <label for="<?php echo $_code ?>_use3d_secure"> <?php echo $this->__('Use 3D secure Payments System') ?></label>
+                </div>
+            </li>
+            <?php endif; ?>
     <?php if($use_bkm):?>
         </div>
         <div class="tabcontent" id="bkmPaymentMethod">
@@ -181,7 +190,7 @@ if(strpos($payfullHelpImagesPath, 'rwd') === false){
 
     banks                   = false;
     var grandTotal          = document.getElementById('grand_total').getAttribute('rel');
-    var currency_symbole    = '<?php echo $currency_symbol; ?>';
+    var currency_symbol     = '<?php echo $currency_symbol; ?>';
     var $cc                 = document.getElementById('<?php echo $_code ?>_cc_number');
     var $bank               = document.getElementById('<?php echo $_code ?>_bank_id');
     var $has3d              = document.getElementById('<?php echo $_code ?>_has3d');
@@ -195,11 +204,15 @@ if(strpos($payfullHelpImagesPath, 'rwd') === false){
     BIN                     = false;
     bkmPaymentMethodTab     = document.getElementById('bkmPaymentMethodTab');
     cardPaymentMethodTab    = document.getElementById('cardPaymentMethodTab');
+    divSelectorExtraInst  = document.getElementsByClassName('extra_installments_container');
+    containerSelectorInst = document.getElementsByClassName('extra_installments_select');
 
     $cc.addEventListener('keyup', getCardBrandAndInstallmentsList, false);
     $cc.addEventListener('change', getCardBrandAndInstallmentsList, false);
     bkmPaymentMethodTab.addEventListener('click', openBKMPaymentMethod, false);
     cardPaymentMethodTab.addEventListener('click', openCardPaymentMethod, false);
+
+
 
     function getCardBrandAndInstallmentsList(e){
         var target = e.target || e.srcElement;
@@ -260,8 +273,11 @@ if(strpos($payfullHelpImagesPath, 'rwd') === false){
 
     function buildInstallmentsTable(bankName, cardType) {
         $options.innerHTML     = '';
+        var total      = '<?php echo $grandTotal; ?>';
+        var currency   = '<?php echo $currency; ?>';
+        var url_params = '?bin='+BIN+'&total='+total+'&currency='+currency;
 
-        var url = '<?php echo Mage::getUrl('payfull/service/banks', array('_secure' => false)); ?>'+'?bin='+BIN;
+        var url = '<?php echo Mage::getUrl('payfull/service/banks', array('_secure' => false)); ?>'+url_params;
         $card_load.style.display = 'block';
         var xmlhttp = new XMLHttpRequest();
         xmlhttp.open("GET", url, true);
@@ -280,7 +296,7 @@ if(strpos($payfullHelpImagesPath, 'rwd') === false){
                         $gateway.value = bank.gateway;
                         for (item of bank.installments) {
                             if(cardType != 'CREDIT' || parseInt(item.count) == 1)  continue;
-                            $options.insertAdjacentHTML('beforeend', getInstallementOption(parseInt(item.count), grandTotal, item.commission));
+                            $options.insertAdjacentHTML('beforeend', getInstallementOption(parseInt(item.count), grandTotal, item.commission, item.hasExtra));
                         }
                         break;
                     }
@@ -291,19 +307,21 @@ if(strpos($payfullHelpImagesPath, 'rwd') === false){
         };
     }
 
-    function getInstallementOption(count, amount, percentage) {
-        var commession = percentage.replace('%', '');
-        var total = parseFloat(amount) * (1 + parseFloat(commession) / 100);
-        var pmon = total / count;
-        var checked = count==1 ? 'checked' : '';
+    function getInstallementOption(count, amount, percentage, hasExtra) {
+        var commession  = percentage.replace('%', '');
+        var total       = parseFloat(amount) * (1 + parseFloat(commession) / 100);
+        var pmon        = total / count;
+        var checked     = count==1 ? 'checked' : '';
+        var textOfCount = count==1?'<?php echo $this->__('One Shot'); ?>' : count;
+        textOfCount     = hasExtra=='1'?'<span class="joker">'+count+' + Joker</span>' : textOfCount;
         return ''
             + '<div class="installment_row">'
             + '<div class="install_body_label installment_radio">'
             + '<input rel="'+count+'" class="custom_field_installment_radio" type="radio" '+checked+' name="payment[installment]" value="'+count+'" />'
             + '</div>'
-            + '<div class="install_body_label installment_lable_code">'+count+'</div>'
-            + '<div class="install_body_label"> '+currency_symbole+ pmon.toFixed(2) + '</div>'
-            + '<div rel="' + total + '" class="install_body_label final_commi_price"> ' + currency_symbole + parseFloat(total).toFixed(2) + '</div>'
+            + '<div class="install_body_label installment_lable_code">'+textOfCount+'</div>'
+            + '<div class="install_body_label"> '+currency_symbol+ pmon.toFixed(2) + '</div>'
+            + '<div rel="' + total + '" class="install_body_label final_commi_price"> ' + currency_symbol + parseFloat(total).toFixed(2) + '</div>'
             + '</div>'
             ;
     }
@@ -338,6 +356,7 @@ if(strpos($payfullHelpImagesPath, 'rwd') === false){
         var $installmentRadio = document.getElementsByClassName('custom_field_installment_radio');
         for (var i = 0; i < $installmentRadio.length; i++) {
             $installmentRadio[i].addEventListener('click', showHide3D, false);
+            $installmentRadio[i].addEventListener('click', showHideExtraInstallments, false);
         }
     }
 
@@ -352,6 +371,59 @@ if(strpos($payfullHelpImagesPath, 'rwd') === false){
         } else {
             $enable3dSecure.style.display = 'block';
         }
+    }
+
+    function showHideExtraInstallments(e) {
+        var target = e.target || e.srcElement;
+        var installments = target.getAttribute('rel');
+        if(installments < 2){
+            removeExtraInstallments();
+            return false;
+        }
+
+        var total     = '<?php echo $grandTotal; ?>';
+        var currency  = '<?php echo $currency; ?>';
+        var bankId    = $bank.value;
+        var gateway   = $gateway.value;
+
+        var url_params = '?total='+total+'&currency='+currency+'&installments='+installments+'&bankId='+bankId+'&gateway='+gateway;
+        var url = '<?php echo Mage::getUrl('payfull/service/extraInstallments', array('_secure' => false)); ?>'+url_params;
+        $card_load.style.display = 'block';
+        var xmlhttp = new XMLHttpRequest();
+        xmlhttp.open("GET", url, true);
+        xmlhttp.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+        xmlhttp.send();
+        xmlhttp.onreadystatechange = function() {
+            if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                var response             = JSON.parse(xmlhttp.responseText);
+                if(!response.status){
+                    removeExtraInstallments();
+                    return false;
+                }
+                if(response.extra_inst != ''){
+                    var selectExtraInstallments = "<select name='campaign_id' class='form-control'>";
+                    selectExtraInstallments     = selectExtraInstallments+'<option value=""><?php echo $this->__('- Select -'); ?></option>';
+                    var extra_inst = response.extra_inst;
+                    for (var index in extra_inst) {
+                        var value = extra_inst[index];
+                        var option = '<option value="'+value+'">+ '+index+'</option>';
+                        selectExtraInstallments = selectExtraInstallments+option;
+                    }
+                    selectExtraInstallments = selectExtraInstallments+'</select>';
+                    containerSelectorInst[0].innerHTML    = selectExtraInstallments;
+                    divSelectorExtraInst[0].style.display = 'block';
+                }else{
+                    removeExtraInstallments();
+                }
+                $card_load.style.display = 'none';
+            }
+        };
+    }
+
+    function removeExtraInstallments(){
+        containerSelectorInst[0].innerHTML      = '';
+        divSelectorExtraInst[0].style.display   = 'none';
+        $card_load.style.display                = 'none';
     }
 
     function openPaymentMethod() {
