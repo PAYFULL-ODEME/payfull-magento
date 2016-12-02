@@ -51,6 +51,12 @@ class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
         return $this->getConfigData('use_bkm') ? $info->getUseBkm() : false;
     }
 
+    protected function getCampaignId()
+    {
+        $info = $this->getInfoInstance();
+        return $this->getConfigData('use_extra_installment') ? $info->getCampaignId() : false;
+    }
+
     public function assignData($data)
     {
         // Mage::throwException("assignData: ".print_r($data, 1));
@@ -78,6 +84,10 @@ class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
 
         if ($data->getUseBkm()) {
             $info->setUseBkm($data->getUseBkm());
+        }
+
+        if ($data->getCampaignId()) {
+            $info->setCampaignId($data->getCampaignId());
         }
 
         $info->setCcType($data->getCcType())
@@ -313,6 +323,12 @@ class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
             $request['return_url']    = $return_url;
             $request['installments']  = $this->getConfigData('use_installment') ? 1 : 0;
         }
+
+        $campaignId = $this->getCampaignId();
+        if(isset($campaignId) AND $campaignId){
+            $request['campaign_id'] = $campaignId;
+        }
+
         return $request;
     }
     

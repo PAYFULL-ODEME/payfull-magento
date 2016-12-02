@@ -402,7 +402,7 @@ if(strpos($payfullHelpImagesPath, 'rwd') === false){
                     return false;
                 }
                 if(response.extra_inst != ''){
-                    var selectExtraInstallments = "<select name='campaign_id' class='form-control'>";
+                    var selectExtraInstallments = "<select name='payment[campaign_id]' id='<?php echo $_code ?>_campaign_id' class='form-control'>";
                     selectExtraInstallments     = selectExtraInstallments+'<option value=""><?php echo $this->__('- Select -'); ?></option>';
                     var extra_inst = response.extra_inst;
                     for (var index in extra_inst) {
