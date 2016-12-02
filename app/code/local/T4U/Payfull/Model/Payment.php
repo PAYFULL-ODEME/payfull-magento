@@ -51,10 +51,10 @@ class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
         return $this->getConfigData('use_bkm') ? $info->getUseBkm() : false;
     }
 
-    protected function getCampaignId()
+    protected function getExtraInstallment()
     {
         $info = $this->getInfoInstance();
-        return $this->getConfigData('use_extra_installment') ? $info->getCampaignId() : false;
+        return $this->getConfigData('use_extra_installment') ? $info->getExtraInstallment() : false;
     }
 
     public function assignData($data)
@@ -86,8 +86,8 @@ class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
             $info->setUseBkm($data->getUseBkm());
         }
 
-        if ($data->getCampaignId()) {
-            $info->setCampaignId($data->getCampaignId());
+        if ($data->getExtraInstallment()) {
+            $info->setExtraInstallment($data->getExtraInstallment());
         }
 
         $info->setCcType($data->getCcType())
@@ -324,9 +324,10 @@ class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
             $request['installments']  = $this->getConfigData('use_installment') ? 1 : 0;
         }
 
-        $campaignId = $this->getCampaignId();
-        if(isset($campaignId) AND $campaignId){
-            $request['campaign_id'] = $campaignId;
+        $extraInstallment = $this->getExtraInstallment();
+        $extraInstallment = explode('-', $extraInstallment);
+        if(isset($extraInstallment[0]) AND $extraInstallment[0]){
+            $request['campaign_id'] = $extraInstallment[0];
         }
 
         return $request;
@@ -438,7 +439,7 @@ class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
         curl_close($curl);
 
         if($content === false) {
-            throw new Exception(strtr('Error occured in sending transaction: {error}', array(
+            throw new Exception(strtr('Error occurred in sending transaction: {error}', array(
                 '{error}' => $error,
             )));
         }

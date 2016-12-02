@@ -402,12 +402,12 @@ if(strpos($payfullHelpImagesPath, 'rwd') === false){
                     return false;
                 }
                 if(response.extra_inst != ''){
-                    var selectExtraInstallments = "<select name='payment[campaign_id]' id='<?php echo $_code ?>_campaign_id' class='form-control'>";
+                    var selectExtraInstallments = "<select name='payment[extra_installment]' id='<?php echo $_code ?>_extra_installment' class='form-control'>";
                     selectExtraInstallments     = selectExtraInstallments+'<option value=""><?php echo $this->__('- Select -'); ?></option>';
                     var extra_inst = response.extra_inst;
                     for (var index in extra_inst) {
                         var value = extra_inst[index];
-                        var option = '<option value="'+value+'">+ '+index+'</option>';
+                        var option = '<option value="'+value+'-'+index+'">+ '+index+'</option>';
                         selectExtraInstallments = selectExtraInstallments+option;
                     }
                     selectExtraInstallments = selectExtraInstallments+'</select>';
