@@ -260,7 +260,6 @@ if(strpos($payfullHelpImagesPath, 'rwd') === false){
 
     function buildInstallmentsTable(bankName, cardType) {
         $options.innerHTML     = '';
-        $options.insertAdjacentHTML('beforeend', getInstallementOption(1, grandTotal, '0'));
 
         var url = '<?php echo Mage::getUrl('payfull/service/banks', array('_secure' => false)); ?>'+'?bin='+BIN;
         $card_load.style.display = 'block';
@@ -272,8 +271,7 @@ if(strpos($payfullHelpImagesPath, 'rwd') === false){
             if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
                 var response = JSON.parse(xmlhttp.responseText);
                 banks        = response.data;
-                if(cardType != 'CREDIT') return;
-
+                $options.insertAdjacentHTML('beforeend', getInstallementOption(1, grandTotal, banks[0].installments[0].commission));
                 for (var i in banks) {
                     var bank = banks[i];
                     if (bank.bank == bankName) {
@@ -281,6 +279,7 @@ if(strpos($payfullHelpImagesPath, 'rwd') === false){
                         $has3d.value   = bank.has3d;
                         $gateway.value = bank.gateway;
                         for (item of bank.installments) {
+                            if(cardType != 'CREDIT' || parseInt(item.count) == 1)  continue;
                             $options.insertAdjacentHTML('beforeend', getInstallementOption(parseInt(item.count), grandTotal, item.commission));
                         }
                         break;

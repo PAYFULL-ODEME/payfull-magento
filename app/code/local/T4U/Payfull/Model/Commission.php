@@ -19,7 +19,7 @@ class T4U_Payfull_Model_Commission extends Mage_Sales_Model_Quote_Address_Total_
             return $this;
         }
 
-        if (isset($_REQUEST['payment']) && $_REQUEST['payment'] != '' AND $_REQUEST['payment']['installment'] > 1) {
+        if (isset($_REQUEST['payment']) && $_REQUEST['payment'] != '') {
             $exist_amount   = $quote->getFeeAmount();
 
             $fee            = $this->getCommission($_REQUEST["payment"]);
@@ -49,9 +49,9 @@ class T4U_Payfull_Model_Commission extends Mage_Sales_Model_Quote_Address_Total_
     }
 
     public function getCommission($data) {
-        $quote = Mage::getModel('checkout/session')->getQuote();
-        $totals = $quote->getTotals();
-        $grand_total = 0;
+        $quote          = Mage::getModel('checkout/session')->getQuote();
+        $totals         = $quote->getTotals();
+        $grand_total    = 0;
 
         foreach($totals as $key=>$total){
             if($key == 'grand_total') continue;
@@ -83,6 +83,11 @@ class T4U_Payfull_Model_Commission extends Mage_Sales_Model_Quote_Address_Total_
                     }
                 }
             }
+        }
+
+        if($data['installment'] == 1){
+            $installments_commission = $banksInfo[0]['installments'][0]['commission'];
+            $installments_commission = str_replace('%', '', $installments_commission);
         }
 
         $subTotalValue = $grand_total * ($installments_commission/100);
