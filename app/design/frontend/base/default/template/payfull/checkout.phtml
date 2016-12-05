@@ -58,15 +58,15 @@ if(strpos($payfullHelpImagesPath, 'rwd') === false){
     #payfull_use3d_secure {  margin-top: 10px; margin-right: 10px;}
     .joker {  border-radius: 25px;  font-weight: 600;  padding: 3px 10px;  background: #ff9800;  color: white;  text-transform: uppercase;  }
     /* Style the list */
-    ul.tab {  list-style-type: none;  margin: 0;  padding: 0;  overflow: hidden;  border: 1px solid #ccc;  background-color: #f1f1f1;  }
+    #payment_form_payfull ul.tab {  list-style-type: none;  margin: 0;  padding: 0;  overflow: hidden;  border: 1px solid #ccc;  background-color: #f1f1f1;  }
     /* Float the list items side by side */
-    ul.tab li {float: left; height: 61px; margin: 0 !important; padding: 0!important;}
+    #payment_form_payfull ul.tab li {float: left; height: 61px; margin: 0 !important; padding: 0!important;}
     /* Style the links inside the list items */
-    ul.tab li a { display: inline-block;  color: black;  text-align: center;  padding: 14px 16px;  text-decoration: none;  transition: 0.3s;  font-size: 17px; height: 61px; }
+    #payment_form_payfull ul.tab li a { display: inline-block;  color: black;  text-align: center;  padding: 14px 16px;  text-decoration: none;  transition: 0.3s;  font-size: 17px; height: 61px; }
     /* Change background color of links on hover */
-    ul.tab li a:hover {background-color: #ddd;}
+    #payment_form_payfull ul.tab li a:hover {background-color: #ddd;}
     /* Create an active/current tablink class */
-    ul.tab li a:focus, .active {background-color: #ccc;}
+    #payment_form_payfull .active {background-color: #ccc;}
     /* Style the tab content */
     .tabcontent { display: none;  padding: 6px 12px;  border: 1px solid #ccc;  border-top: none; }
     .bkmImage {  height: 100% !important;  }
@@ -446,6 +446,7 @@ if(strpos($payfullHelpImagesPath, 'rwd') === false){
         bkmPaymentMethodTab.className += " active";
         document.getElementById(methodName).style.display = "block";
         document.getElementById('<?php echo $_code ?>_use_bkm').value = 1;
+        document.getElementById('<?php echo $_code ?>_bank_id').value = 'BKMExpress';
     }
 
     function openCardPaymentMethod() {
@@ -455,6 +456,7 @@ if(strpos($payfullHelpImagesPath, 'rwd') === false){
         cardPaymentMethodTab.className += " active";
         document.getElementById(methodName).style.display = "block";
         document.getElementById('<?php echo $_code ?>_use_bkm').value = 0;
+        document.getElementById('<?php echo $_code ?>_bank_id').value = '';
     }
 
 
