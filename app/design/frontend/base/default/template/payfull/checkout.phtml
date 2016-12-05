@@ -447,6 +447,7 @@ if(strpos($payfullHelpImagesPath, 'rwd') === false){
         document.getElementById(methodName).style.display = "block";
         document.getElementById('<?php echo $_code ?>_use_bkm').value = 1;
         document.getElementById('<?php echo $_code ?>_bank_id').value = 'BKMExpress';
+        document.getElementById('<?php echo $_code ?>_cc_number').value = '';
     }
 
     function openCardPaymentMethod() {
