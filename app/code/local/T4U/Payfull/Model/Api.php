@@ -1,11 +1,9 @@
 <?php
 
-class T4U_Payfull_Model_Api 
-{
+class T4U_Payfull_Model_Api {
     protected $_config;
 
-    public function & getConfig()
-    {
+    public function & getConfig() {
         if(empty($this->_config)) {
             $attrs = ['endpoint'];
             foreach ($attrs as $key) {
@@ -15,8 +13,7 @@ class T4U_Payfull_Model_Api
         return $this->_config;
     }
 
-    public function test()
-    {
+    public function test() {
         $config = $this->getConfig();
         $configData = $this->getMethod()->getData();
         return $configData;

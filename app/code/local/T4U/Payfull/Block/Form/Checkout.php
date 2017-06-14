@@ -1,30 +1,24 @@
 <?php
 class T4U_Payfull_Block_Form_Checkout extends Mage_Payment_Block_Form
 {
-    protected function _construct()
-    {
+    protected function _construct() {
         parent::_construct();
         $this->setTemplate('payfull/checkout.phtml');
     }
 
-    protected function _getConfig()
-    {
+    protected function _getConfig() {
         return Mage::getSingleton('payment/config');  
     }
 
-
-    public function getQuote()
-    {
+    public function getQuote() {
         return Mage::getModel('checkout/session')->getQuote();
     }
 
-    public function getCurrencyCode()
-    {
+    public function getCurrencyCode() {
         return Mage::app()->getStore()->getCurrentCurrencyCode();
     }
 
-    public function getCurrencySymbole()
-    {
+    public function getCurrencySymbole() {
         $code = $this->getCurrencyCode();
         return Mage::app()->getLocale()->currency($code)->getSymbol();
     }
@@ -34,17 +28,14 @@ class T4U_Payfull_Block_Form_Checkout extends Mage_Payment_Block_Form
      *
      * @return array
      */
-    public function getTotal()
-    {
-        
+    public function getTotal() {
         $quote = Mage::getModel('checkout/session')->getQuote();
         $totals = $quote->getTotals();
         $grand_total = $totals['grand_total']->getData('value');
         return $grand_total;
     }
 
-    public function getCcMonths()
-    {
+    public function getCcMonths() {
         $months = $this->getData('cc_months');
         if (is_null($months)) {
             $months[0] =  $this->__('Month');
@@ -64,8 +55,7 @@ class T4U_Payfull_Block_Form_Checkout extends Mage_Payment_Block_Form
      *
      * @return array
      */
-    public function getCcYears()
-    {
+    public function getCcYears() {
         $years = $this->getData('cc_years');
         if (is_null($years)) {
             $years = $this->_getConfig()->getYears();
@@ -81,15 +71,13 @@ class T4U_Payfull_Block_Form_Checkout extends Mage_Payment_Block_Form
         }
         return $years;
     }
-    
-    
+
     /**
      * Retrive has verification configuration
      *
      * @return boolean
      */
-    public function hasVerification()
-    {
+    public function hasVerification() {
         if ($this->getMethod()) {
             $configData = $this->getMethod()->getConfigData('useccv');
             if(is_null($configData)){

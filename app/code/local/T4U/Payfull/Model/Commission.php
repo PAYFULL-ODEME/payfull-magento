@@ -3,8 +3,7 @@
 class T4U_Payfull_Model_Commission extends Mage_Sales_Model_Quote_Address_Total_Abstract {
     protected $_code = 'commission';
 
-    public function __construct()
-    {
+    public function __construct() {
         $this->setCode($this->_code);
     }
 
@@ -21,24 +20,19 @@ class T4U_Payfull_Model_Commission extends Mage_Sales_Model_Quote_Address_Total_
 
         if (isset($_REQUEST['payment']) && $_REQUEST['payment'] != '') {
             $exist_amount   = $quote->getFeeAmount();
-
             $fee            = $this->getCommission($_REQUEST["payment"]);
             $commission     = $fee - $exist_amount;
             $address->setFeeAmount($commission);
             $address->setBaseFeeAmount($commission);
-
             $quote->setFeeAmount($commission);
-
             $address->setGrandTotal($address->getGrandTotal() + $address->getFeeAmount());
             $address->setBaseGrandTotal($address->getBaseGrandTotal() + $address->getBaseFeeAmount());
-
         }
 
         return $this;
     }
 
-    public function fetch(Mage_Sales_Model_Quote_Address $address)
-    {
+    public function fetch(Mage_Sales_Model_Quote_Address $address) {
         $amt = $address->getFeeAmount();
         $address->addTotal(array(
             'code'  => $this->getCode(),
@@ -59,7 +53,6 @@ class T4U_Payfull_Model_Commission extends Mage_Sales_Model_Quote_Address_Total_
         }
 
         $paymentHelper = new T4U_Payfull_Model_Payment;
-
         $banksInfo = $paymentHelper->banks();
         $banksInfo = $banksInfo['data'];
 

@@ -1,8 +1,8 @@
 <?php
 $_code = $this->getMethodCode();
-
 $installment          = Mage::getStoreConfig('payment/payfull/use_installment');
 $secure_3d            = Mage::getStoreConfig('payment/payfull/use3d_secure');
+$force_3d_debit       = true;
 $use_bkm              = Mage::getStoreConfig('payment/payfull/use_bkm');
 $quote                = Mage::getModel('checkout/session')->getQuote();
 $quoteData            = $quote->getData();
@@ -19,58 +19,42 @@ $payfullHelpImagesPath = $this->getSkinUrl('images/payfull/');
 if(strpos($payfullHelpImagesPath, 'rwd') === false){
     $payfullHelpImagesPath = str_replace('frontend/base', 'frontend/rwd', $payfullHelpImagesPath);
 }
+
 ?>
 <style>
-    .input-cc-number-visa {
-        background: rgba(0, 0, 0, 0) url("<?php echo $payfullHelpImagesPath.'payfull_creditcard_visa.png'; ?>") no-repeat scroll right center / 13% auto !important;
-        float: left;
-    }
-
-    .input-cc-number-master {
-        background: rgba(0, 0, 0, 0) url("<?php echo $payfullHelpImagesPath.'payfull_creditcard_master.png'; ?>") no-repeat scroll right center / 13% auto !important;
-        float: left;
-    }
-
-    .input-cc-number-not-supported {
-        background: rgba(0, 0, 0, 0) url("<?php echo $payfullHelpImagesPath.'payfull_creditcard_not_supported.png'; ?>") no-repeat scroll right center / 4% auto !important;
-        float: left;
-    }
-
-    #payment_form_payfull > li {width: 75% !important;  }
-    #payment_form_payfull input[type='text'] {width: 100% !important;  }
-    #payment_form_payfull .v-fix {width: 100% !important;  }
-    #payment_form_payfull .divSelectMenu {width: 49% !important;  }
-    #payment_form_payfull .divSelectMenu > select {width: 100% !important; height: 30px !important; }
-    .card_loder > img {display: inline;vertical-align: middle;width: 25px;}
-    .card_image > img {display: inline-block;width: auto;height:25px;vertical-align: middle;}
-    .card_image { display: inline-block;  padding:0 5px;vertical-align: bottom;}
-    .toatl_label h3 {margin: 15px 0 0 0;}
-    .install_body_label {float: left;width: 30%;height: 40px;text-align: center; border-bottom: 1px solid #d2d2d2;line-height: 40px;}
-    .installment_row {/* padding-top: 10px;*/}
-    .install_body_label.installment_radio, .installmet_head .install_head_label.add_space {height: 40px;text-align: center;width: 10%;line-height: 40px;}
-    #installment_table_id {background-color: #eee;border: 1px solid;border-radius: 5px;padding: 10px;margin-top: 20px; max-width: 97%}
-    .installmet_head .install_head_label {float: left;font-weight: bold;text-align: center;width: 30%; height: 40px;line-height: 40px;border-bottom: 2px solid #d2d2d2; }
-    .installment_body , .installment_footer {  clear: both; }
-    .toatl_label {display:  none;}
-    .use3d_secure_class {float:  left; }
-    .full-width { width: 100% !important;}
-    #enable3dsecure label {  margin-top: 10px;}
-    #payfull_use3d_secure {  margin-top: 10px; margin-right: 10px;}
-    .joker {  border-radius: 25px;  font-weight: 600;  padding: 3px 10px;  background: #ff9800;  color: white;  text-transform: uppercase;  }
-    /* Style the list */
-    #payment_form_payfull ul.tab {  list-style-type: none;  margin: 0;  padding: 0;  overflow: hidden;  border: 1px solid #ccc;  background-color: #f1f1f1;  }
-    /* Float the list items side by side */
-    #payment_form_payfull ul.tab li {float: left; height: 61px; margin: 0 !important; padding: 0!important;}
-    /* Style the links inside the list items */
-    #payment_form_payfull ul.tab li a { display: inline-block;  color: black;  text-align: center;  padding: 14px 16px;  text-decoration: none;  transition: 0.3s;  font-size: 17px; height: 61px; }
-    /* Change background color of links on hover */
-    #payment_form_payfull ul.tab li a:hover {background-color: #ddd;}
-    /* Create an active/current tablink class */
-    #payment_form_payfull .active {background-color: #ccc;}
-    /* Style the tab content */
-    .tabcontent { display: none;  padding: 6px 12px;  border: 1px solid #ccc;  border-top: none; }
-    .bkmImage {  height: 100% !important;  }
-    .bkmTab {  padding: 2px !important;  }
+    .input-cc-number-visa{background:rgba(0,0,0,0) url("<?php echo $payfullHelpImagesPath.'payfull_creditcard_visa.png'; ?>") no-repeat scroll right center / 13% auto!important;float:left}
+    .input-cc-number-master{background:rgba(0,0,0,0) url("<?php echo $payfullHelpImagesPath.'payfull_creditcard_master.png'; ?>") no-repeat scroll right center / 13% auto!important;float:left}
+    .input-cc-number-not-supported{background:rgba(0,0,0,0) url("<?php echo $payfullHelpImagesPath.'payfull_creditcard_not_supported.png'; ?>") no-repeat scroll right center / 4% auto!important;float:left}
+    #payment_form_payfull > li{width:75%!important}
+    #payment_form_payfull input[type='text']{width:100%!important}
+    #payment_form_payfull .v-fix{width:100%!important}
+    #payment_form_payfull .divSelectMenu{width:49%!important}
+    #payment_form_payfull .divSelectMenu > select{width:100%!important;height:30px!important}
+    .card_loder > img{display:inline;vertical-align:middle;width:25px}
+    .card_image > img{display:inline-block;width:auto;height:25px;vertical-align:middle}
+    .card_image{display:inline-block;padding:0 5px;vertical-align:bottom}
+    .toatl_label h3{margin:15px 0 0}
+    .install_body_label{float:left;width:30%;height:40px;text-align:center;border-bottom:1px solid #d2d2d2;line-height:40px}
+    .install_body_label.installment_radio,.installmet_head .install_head_label.add_space{height:40px;text-align:center;width:10%;line-height:40px}
+    #installment_table_id{background-color:#eee;border:1px solid;border-radius:5px;padding:10px;margin-top:20px;max-width:97%}
+    .installmet_head .install_head_label{float:left;font-weight:700;text-align:center;width:30%;height:40px;line-height:40px;border-bottom:2px solid #d2d2d2}
+    .installment_body,.installment_footer{clear:both}
+    .toatl_label{display:none}
+    .use3d_secure_class{float:left}
+    .full-width{width:100%!important}
+    #enable3dsecure label{margin-top:10px}
+    #payfull_use3d_secure{margin-top:10px;margin-right:10px}
+    .joker{border-radius:25px;font-weight:600;padding:3px 10px;background:#ff9800;color:#fff;text-transform:uppercase}
+    #payment_form_payfull ul.tab{list-style-type:none;margin:0;padding:0;overflow:hidden;border:1px solid #ccc;background-color:#f1f1f1}
+    #payment_form_payfull ul.tab li{float:left;height:61px;margin:0!important;padding:0!important}
+    #payment_form_payfull ul.tab li a{display:inline-block;color:#000;text-align:center;padding:14px 16px;text-decoration:none;transition:.3s;font-size:17px;height:61px}
+    #payment_form_payfull ul.tab li a:hover{background-color:#ddd}
+    #payment_form_payfull .active{background-color:#ccc}
+    .tabcontent{display:none;padding:6px 12px;border:1px solid #ccc;border-top:none}
+    .bkmImage{height:100%!important}
+    .bkmTab{padding:2px!important}
+    .disabledClass{pointer-events:none;opacity:.5}
+    .pf_logo{display:block;width:125px;}
 </style>
 
 <ul class="form-list" id="payment_form_<?php echo $_code ?>" style="display:none;">
@@ -80,15 +64,11 @@ if(strpos($payfullHelpImagesPath, 'rwd') === false){
             <li><a href="javascript:void(0)" class="tablinks bkmTab" id="bkmPaymentMethodTab"><img class="bkmImage" src="<?php echo $payfullHelpImagesPath; ?>/BKM.png"></a></li>
         </ul>
     <?php endif;?>
-
     <?php if($use_bkm):?>
         <div class="tabcontent" id="cardPaymentMethod" style="display: block;">
     <?php endif;?>
-            <li class="toatl_label">
-                <h3>
-                    <label><b><?php echo $this->__('Total: ') ?></b></label>
-                    <span rel="<?php echo $grandTotal; ?>" id="grand_total" class="grant_total_custom"><?php echo Mage::helper('core')->currency($grandTotal, true, false); ?></span>
-                </h3>
+            <li class="pf_logo_div">
+                <img class="pf_logo" src="<?php echo $payfullHelpImagesPath; ?>/payfull-logo.png">
             </li>
             <li>
                 <p class="required"><?php echo $this->__('* Required Fields') ?></p>
@@ -143,7 +123,7 @@ if(strpos($payfullHelpImagesPath, 'rwd') === false){
                 <div id="installment_table_id" class="full-width">
                     <div class="installmet_head">
                         <div class="install_head_label add_space"><img style="display: none" class="bank_photo" data-src="<?php echo $payfullHelpImagesPath; ?>" src=""></div>
-                        <div class="install_head_label"><?php echo $this->__('Installmet') ?></div>
+                        <div class="install_head_label"><?php echo $this->__('Installment') ?></div>
                         <div class="install_head_label"><?php echo $this->__('Amount / Month') ?></div>
                         <div class="install_head_label"><?php echo $this->__('Total') ?></div>
                     </div>
@@ -169,14 +149,18 @@ if(strpos($payfullHelpImagesPath, 'rwd') === false){
                     </label>
                 </div>
             </li>
-            <?php if ($secure_3d == 1) : ?>
+            <?php if ($secure_3d == 1) { ?>
             <li class="td_secure" id="enable3dsecure">
                 <div class="input-box full-width">
-                    <input class="use3d_secure_class" type="checkbox" id="<?php echo $_code ?>_use3d_secure" value="1" name="payment[use3d_secure]" />
-                    <label for="<?php echo $_code ?>_use3d_secure"> <?php echo $this->__('Use 3D secure Payments System') ?></label>
+                    <input data-force="false" class="use3d_secure_class" type="checkbox"  id="<?php echo $_code ?>_use3d_secure" value="1" name="payment[use3d_secure]" />
+                    <label class="label_use3d_secure_class" for="<?php echo $_code ?>_use3d_secure"> <?php echo $this->__('Use 3D secure Payments System') ?></label>
                 </div>
             </li>
-            <?php endif; ?>
+            <?php } else { ?>
+                    <input class="use3d_secure_class" type="hidden" id="<?php echo $_code ?>_use3d_secure" value="1" name="payment[use3d_secure]" />
+                    <label style="display: hidden" class="label_use3d_secure_class" for="<?php echo $_code ?>_use3d_secure"> <?php echo $this->__('Use 3D secure Payments System') ?></label>
+            <?php } ?>
+
     <?php if($use_bkm):?>
         </div>
         <div class="tabcontent" id="bkmPaymentMethod">
@@ -185,11 +169,9 @@ if(strpos($payfullHelpImagesPath, 'rwd') === false){
         </div>
     <?php endif;?>
 </ul>
-
 <script type="text/javascript">
-
     banks                   = false;
-    var grandTotal          = document.getElementById('grand_total').getAttribute('rel');
+    var grandTotal          = <?php echo $grandTotal;?>;
     var currency_symbol     = '<?php echo $currency_symbol; ?>';
     var $cc                 = document.getElementById('<?php echo $_code ?>_cc_number');
     var $bank               = document.getElementById('<?php echo $_code ?>_bank_id');
@@ -209,11 +191,12 @@ if(strpos($payfullHelpImagesPath, 'rwd') === false){
 
     $cc.addEventListener('keyup', getCardBrandAndInstallmentsList, false);
     $cc.addEventListener('change', getCardBrandAndInstallmentsList, false);
-    bkmPaymentMethodTab.addEventListener('click', openBKMPaymentMethod, false);
-    cardPaymentMethodTab.addEventListener('click', openCardPaymentMethod, false);
 
-
-
+    if(bkmPaymentMethodTab != null){
+        bkmPaymentMethodTab.addEventListener('click', openBKMPaymentMethod, false);
+        cardPaymentMethodTab.addEventListener('click', openCardPaymentMethod, false);
+    }
+    
     function getCardBrandAndInstallmentsList(e){
         var target = e.target || e.srcElement;
         BIN        = target.value;
@@ -252,6 +235,19 @@ if(strpos($payfullHelpImagesPath, 'rwd') === false){
                         $bank_photo.setAttribute('src', bankImageSrc);
                         $bank_photo.style.display = 'block';
                     }
+
+                    //force 3d for debit
+                    var checkbox3D = document.getElementsByClassName('use3d_secure_class')[0];
+                    var checkbox3DLabel = document.getElementsByClassName('label_use3d_secure_class')[0];
+                    if(response.data.type  != 'CREDIT' &&  checkbox3D.getAttribute('data-force') == 'false'){
+                        checkbox3D.className      += " disabledClass";
+                        checkbox3DLabel.className += " disabledClass";
+                        checkbox3D.checked = true;
+                    } else if(checkbox3D.getAttribute('data-force') == 'false'){
+                        checkbox3D.classList.remove("disabledClass");
+                        checkbox3DLabel.classList.remove("disabledClass");
+                    }
+
                     refreshInstallmentsTable(response.data.bank_id, response.data.type);
                     $card_load.style.display = 'none';
                 }

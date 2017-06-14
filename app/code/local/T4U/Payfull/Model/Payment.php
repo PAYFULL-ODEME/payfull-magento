@@ -1,71 +1,50 @@
 <?php
 
-class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
-{
+class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract {
+    protected $_code                    = 'payfull';
+    protected $_formBlockType           = 'payfull/form_checkout';
+    protected $_infoBlockType           = 'payfull/info_payment';
+    protected $_canVoid                 = false;
+    protected $_canOrder                = true;
+    protected $_canRefund               = true;
+    protected $_canCapture              = true;
+    protected $_canAuthorize            = false;
+    protected $_canRefundInvoicePartial = true;
+    protected $_canCapturePartial       = true;
+    protected $_canUseCheckout          = true;
+    protected $_canSaveCc               = false;
 
-    protected $_code = 'payfull';
-    protected $_formBlockType = 'payfull/form_checkout';
-    protected $_infoBlockType = 'payfull/info_payment';
-
-    protected $_canVoid = false;
-    protected $_canOrder = true;
-    protected $_canRefund = true;
-    protected $_canCapture = true;
-    protected $_canAuthorize = false;
-    protected $_canRefundInvoicePartial     = true;
-    protected $_canCapturePartial= true;
-    protected $_canUseCheckout = true;
-    protected $_canSaveCc = false;
-
-    // public function initialize($paymentAction, $stateObject)
-    // {
-    //     print_r($paymentAction);
-    //     throw new Exception("payment action: ".$paymentAction);
-    //     return $this;
-    // }
-
-    public function api()
-    {
+    public function api() {
         return Mage::getSingleton('payfull/api');
     }
 
-    protected function config($key)
-    {
+    public function config($key) {
         return $this->getConfigData($key);
     }
 
-    public function getConfigPaymentAction()
-    {
+    public function getConfigPaymentAction() {
         return ($this->getIs3DSecure() OR $this->getIsBkm()) ? 'order' :'authorize_capture';
     }
 
-    protected function getIs3DSecure()
-    {
+    protected function getIs3DSecure() {
         $info = $this->getInfoInstance();
         return $this->getConfigData('use3d_secure') ? $info->getUse3dSecure() : false;
     }
 
-    protected function getIsBkm()
-    {
+    protected function getIsBkm() {
         $info = $this->getInfoInstance();
         return $this->getConfigData('use_bkm') ? $info->getUseBkm() : false;
     }
 
-    protected function getExtraInstallment()
-    {
+    protected function getExtraInstallment() {
         $info = $this->getInfoInstance();
         return $this->getConfigData('use_extra_installment') ? $info->getExtraInstallment() : false;
     }
 
-    public function assignData($data)
-    {
-        // Mage::throwException("assignData: ".print_r($data, 1));
-        // return $this;
-
+    public function assignData($data) {
         $commission = array();
         $commission['rate'] = $data->getCommission();
         $commission['total'] = $data->getCommissionRate();
-
         $info = $this->getInfoInstance();
 
         if ($data->getInstallment()) {
@@ -81,7 +60,6 @@ class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
         }
 
         $info->setUse3dSecure($data->getUse3dSecure()==1);
-
         if ($data->getUseBkm()) {
             $info->setUseBkm($data->getUseBkm());
         }
@@ -105,8 +83,7 @@ class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
         return $this;
     }
     
-    public function getOrderPlaceRedirectUrl()
-    {
+    public function getOrderPlaceRedirectUrl() {
         if($this->getIs3DSecure() OR $this->getIsBkm()) {
             return Mage::getUrl('payfull/service/redirect', array(
                 '_secure' => false
@@ -116,9 +93,7 @@ class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
         }
     }
 
-    public function order(Varien_Object $payment, $amount)
-    {
-
+    public function order(Varien_Object $payment, $amount) {
         if(!$this->getIs3DSecure() AND !$this->getIsBkm()) {
             Mage::throwException("Authorize method can be used only with 3D secure transaction or BKM Express.");
             return $this;
@@ -126,12 +101,13 @@ class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
 
         $order = $payment->getOrder();
         $quote = Mage::getModel('sales/quote')->load($order->getQuoteId());
-        
         $request = $this->buildSalePacket($payment, $amount);
+
         try {
             $this->validatePaymentData($request);
             $result = $this->callApi('Sale', $request, false);
             $isValid3DResponse = strpos($result, '<html') !== false ? true : false; // response has HTML content
+
             if($isValid3DResponse) {
                 $payment->setIsTransactionClosed(false);
                 $order->setTotalPaid(0)->save();
@@ -158,8 +134,8 @@ class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
         return $this;
     }
 
-    public function capture(Varien_Object $payment, $amount)
-    {
+    public function capture(Varien_Object $payment, $amount) {
+
         if($this->getIs3DSecure() OR $this->getIsBkm()) {
             Mage::throwException("Capture method cannot be used with 3D secure transaction.");
             return $this;
@@ -169,13 +145,10 @@ class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
         $data = [];
         $data['cc_number']   = $info->getCcNumber();
         $data['installment'] = $info->getInstallment();
-
         $commissionHelper = new T4U_Payfull_Model_Commission;
         $commissionValue  = $commissionHelper->getCommission($data);
-
         $is3d  = $this->getIs3DSecure();
         $order = $payment->getOrder();
-
         $session = Mage::getSingleton('checkout/session');
         $request = $this->buildSalePacket($payment, $amount);
         $payment->setAmount(0);
@@ -201,15 +174,16 @@ class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
         return $this;
     }
 
-    public function refund(Varien_Object $payment, $amount)
-    {
+    public function refund(Varien_Object $payment, $amount) {
         $order = $payment->getOrder();
         $tx = $payment->getLastTransId();
+
         if(isset($tx)) {
             $result = $this->callApi('Return', [
                 'transaction_id' => $tx,
                 'total' => $amount
             ]);
+
             if(isset($result['status']) && $result['status']) {
                 $payment->setTransactionId($result['transaction_id']);
                 $payment->setIsTransactionClosed(1);
@@ -217,10 +191,12 @@ class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
                     'refund'=>'Refund transaction succeeded',
                     'amount'=> $amount,
                 ));
+
             } else {
                 $message = isset($result['ErrorMSG']) ? $result['ErrorMSG'] : "Refund transaction failed";
                 Mage::throwException($message);
             }
+
         } else {
             $errorMsg = __('The order does not support refund operation.');
             Mage::throwException($errorMsg);
@@ -228,23 +204,20 @@ class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
         return $this;
     }
 
-    public function bin($bin)
-    {
+    public function bin($bin) {
         return $this->callApi('Get', [
             'get_param' => 'Issuer',
             'bin' => $bin
         ]);
     }
     
-    public function banks()
-    {
+    public function banks() {
         return $this->callApi('Get', [
             'get_param' => 'Installments',
         ]);
     }
 
-    public function extraInstallments($total, $currency, $installments, $bankId, $gateway)
-    {
+    public function extraInstallments($total, $currency, $installments, $bankId, $gateway) {
         return $this->callApi('Get', [
             'get_param'       => 'ExtraInstallments',
             "total"           => $total,
@@ -255,8 +228,7 @@ class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
         ]);
     }
 
-    public function extraInstallmentsList($currency)
-    {
+    public function extraInstallmentsList($currency) {
         return $this->callApi('Get', [
             'get_param'       => 'ExtraInstallmentsList',
             "exchange_rate"   => 1,
@@ -264,52 +236,45 @@ class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
         ]);
     }
 
-    public function test()
-    {
-        $conf = $this->getConfigData('endpoint');
-        //$conf = Mage::getSingleton('payment/config');
-        // $o = $this->getConfigData(); 
-        return print_r($conf, 1);
-        return __METHOD__;
-    }
+    protected function buildSalePacket($payment, $total) {
 
-    protected function buildSalePacket($payment, $total)
-    {
         $order          = $payment->getOrder();
         $currency       = $order->getBaseCurrencyCode();
         $billAddress    = $order->getBillingAddress();
         $installment    = $this->getConfigData('use_installment') ? $payment->getInstallment() : 1;
         $use_bkm        = $this->getIsBkm();
         $return_url     = Mage::getUrl('payfull/service/response', array('_secure' => false));
-
-		$store = Mage::app()->getStore();
-		$payment_title = "{$store->getName()}: total $total [$currency]";
+		$store          = Mage::app()->getStore();
+		$payment_title  = "{$store->getName()}: total $total [$currency]";
 
         $request = [
-            "total" => $total,
-            "cc_name" => $payment->getCcOwner(),
-            "cc_number" => $payment->getCcNumber(),
-            "cc_month" => $payment->getCcExpMonth(),
-            "cc_year" => $payment->getCcExpYear(),
-            "cc_cvc" => $payment->getCcCid(),
-            "currency" => $currency,
-            "installments" => $installment,
-            "payment_title" => $payment_title,
-            "customer_firstname" => $billAddress->getData('firstname'),
-            "customer_lastname" => $billAddress->getData('lastname'),
-            "customer_email" => $billAddress->getData('email'),
-            "customer_phone" => $billAddress->getData('telephone'),
-            "passive_data" => $order->getIncrementId(),
-            "use3d" => 0,
+            "total"                 => $total,
+            "cc_name"               => $payment->getCcOwner(),
+            "cc_number"             => $payment->getCcNumber(),
+            "cc_month"              => $payment->getCcExpMonth(),
+            "cc_year"               => $payment->getCcExpYear(),
+            "cc_cvc"                => $payment->getCcCid(),
+            "currency"              => $currency,
+            "installments"          => $installment,
+            "payment_title"         => $payment_title,
+            "customer_firstname"    => $billAddress->getData('firstname'),
+            "customer_lastname"     => $billAddress->getData('lastname'),
+            "customer_email"        => $billAddress->getData('email'),
+            "customer_phone"        => $billAddress->getData('telephone'),
+            "passive_data"          => $order->getIncrementId(),
+            "use3d"                 => 0,
         ];
+
         if ($installment > 1) {
             $request['bank_id'] = $payment->getBankId();
             $request['gateway'] = $payment->getGateway();
         }
+
         if ($this->getIs3DSecure()) {
             $request['use3d'] = 1;
             $request['return_url'] = $return_url;
         }
+
         if($use_bkm){
             unset($request['use3d']);
             unset($request['gateway']);
@@ -326,6 +291,7 @@ class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
 
         $extraInstallment = $this->getExtraInstallment();
         $extraInstallment = explode('-', $extraInstallment);
+
         if(isset($extraInstallment[0]) AND $extraInstallment[0]){
             $request['campaign_id'] = $extraInstallment[0];
         }
@@ -333,24 +299,22 @@ class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
         return $request;
     }
     
-    public function callApi($action, $data, $return_json=true)
-    {
+    public function callApi($action, $data, $return_json=true) {
         $data['type'] = $action;
         $data['merchant'] = $this->config('username');
         $data['language'] = explode('_', Mage::app()->getLocale()->getLocaleCode())[0];
         $data['client_ip'] = Mage::helper('core/http')->getRemoteAddr();
         $data['hash'] = $this->hash($data, $this->config('password'));
-
         $content = $this->post($this->config('endpoint'), $data);
         
         if($return_json){
             return json_decode($content, true);
         }
+
         return $content;
     }
 
-    protected function validatePaymentData($data)
-    {
+    protected function validatePaymentData($data) {
         try {
             if(!isset($data["bank_id"]) OR ($data["bank_id"] != 'BKMExpress')){
                 $this->checkCCNumber($data["cc_number"]);
@@ -362,12 +326,11 @@ class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
         }
     }
 
-    protected function checkCCNumber($cardNumber){
+    protected function checkCCNumber($cardNumber) {
         $cardNumber = preg_replace('/\D/', '', $cardNumber);
         $len = strlen($cardNumber);
-        if ($len < 15 || $len > 16) {
-
-        }else {
+        if ($len < 15 || $len > 16) {}
+        else {
             switch($cardNumber) {
                 case(preg_match ('/^4/', $cardNumber) >= 1):
                     break;
@@ -380,7 +343,7 @@ class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
         }
     }
 
-    protected function checkCCCVC($cardNumber, $cvc){
+    protected function checkCCCVC($cardNumber, $cvc) {
         // Get the first number of the credit card so we know how many digits to look for
         $firstnumber = (int) substr($cardNumber, 0, 1);
         if ($firstnumber === 3){
@@ -393,27 +356,28 @@ class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
         return true;
     }
 
-    protected function checkCCEXPDate($month, $year){
+    protected function checkCCEXPDate($month, $year) {
         if(strtotime('01-'.$month.'-'.$year) <= time()){
             throw new Exception(__('Incorrect credit card expiration date.'));
         }
         return true;
     }
 
-    protected function hash($data, $password) 
-    {
+    public function hash($data, $password) {
         $message = '';
+        if(isset($data['hash']))  unset($data['hash']);
+
         ksort($data);
         foreach($data as $key=>$value) {
-            $message .= strlen($value).$value;
+            $message .= mb_strlen($value).$value;
         }
         $hash = hash_hmac('sha1', $message, $password);
         
         return $hash;
     }
 
-    protected function post($url, $data=array())
-    {
+    protected function post($url, $data=array()) {
+
         $options = array(
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_FOLLOWLOCATION => true,
@@ -429,11 +393,8 @@ class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
         $curl = curl_init($url);
         curl_setopt_array($curl, $options);
         curl_setopt($curl, CURLOPT_POSTFIELDS, http_build_query($data));
-
-        //ssl
         curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, 0);
         curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, 0);
-
         $content  = curl_exec($curl);
         $error = curl_error($curl);
         curl_close($curl);
@@ -446,4 +407,5 @@ class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
 
         return $content;
     }
+
 }

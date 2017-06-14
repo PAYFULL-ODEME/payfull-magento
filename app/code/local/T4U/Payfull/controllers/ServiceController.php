@@ -1,28 +1,20 @@
 <?php
-class T4U_Payfull_ServiceController extends Mage_Core_Controller_Front_Action
-{
-
-    protected function getPayfull()
-    {
+class T4U_Payfull_ServiceController extends Mage_Core_Controller_Front_Action {
+    protected function getPayfull() {
         return Mage::getSingleton('payfull/payment');
     }
 
-    protected function sendJson($response)
-    {
+    protected function sendJson($response) {
         $this->getResponse()->clearHeaders()->setHeader('Content-type','application/json',true);
         $this->getResponse()->setBody(json_encode($response));
     }
 
-    public function testAction()
-    {
+    public function testAction() {
         $result = $this->getPayfull()->banks();
         print_r($result);
-
-        // $this->sendJson(['data'=>'some data']);
     }
 
-    public function redirectAction()
-    {
+    public function redirectAction() {
         $payfull = Mage::getSingleton('core/session')->getPayfull();
         $html = $payfull['html'];
         unset($payfull['html']);
@@ -31,18 +23,14 @@ class T4U_Payfull_ServiceController extends Mage_Core_Controller_Front_Action
         $order->setTotalPaid(0);
         $order->setState(Mage_Sales_Model_Order::STATE_PENDING_PAYMENT, true, "Waiting to complete 3D secure process.");
         $order->save();
-
         $quote = Mage::getModel('sales/quote')->load($order->getQuoteId());
         $quote->setIsActive(1)->save();
-
         echo $html;
         exit;
-
         // $this->sendJson(['data'=>'some data']);
     }
 
-    public function responseAction()
-    {
+    public function responseAction() {
 
         $data = $this->getRequest()->getPost();
 
@@ -52,7 +40,6 @@ class T4U_Payfull_ServiceController extends Mage_Core_Controller_Front_Action
         $amount     = $order->getGrandTotal();
         $payment    = $order->getPayment();
 
-
         $dataToGetCommission = [];
         $dataToGetCommission['bank_id']     = $data['bank_id'];
         $dataToGetCommission['installment'] = $data['installments'];
@@ -60,16 +47,12 @@ class T4U_Payfull_ServiceController extends Mage_Core_Controller_Front_Action
         $commissionHelper = new T4U_Payfull_Model_Commission;
         $commissionValue  = $commissionHelper->getCommission($dataToGetCommission);
 
-        if (isset($data['status']) && $data['status']) {
+        $paymentHelper       = new T4U_Payfull_Model_Payment();
+        $merchantPass        = $paymentHelper->config('password');
+        $hash                = $paymentHelper->hash($data, $merchantPass);
 
-            // $invoice = Mage::getModel('sales/service_order', $order)->prepareInvoice();
-            // $invoice->setRequestedCaptureCase(Mage_Sales_Model_Order_Invoice::CAPTURE_ONLINE);
-            // // $invoice->register();
-            // $transactionSave = Mage::getModel('core/resource_transaction')
-            //     ->addObject($invoice)
-            //     ->addObject($invoice->getOrder())
-            //     ->save()
-            // ;
+        if (isset($data['status']) && $data['status'] && $hash == $data['hash']) {
+
             $payment->setTransactionId($data['transaction_id'])
                 ->setAmount($amount)
                 // ->capture(null)
@@ -85,7 +68,6 @@ class T4U_Payfull_ServiceController extends Mage_Core_Controller_Front_Action
             $order->setState(Mage_Sales_Model_Order::STATE_PROCESSING, true, "3D payment succeeded.");
             $order->save();
             $payment->save();
-            // die('done');
 
             $quote = Mage::getModel('sales/quote')->load($order->getQuoteId());
             $quote->setIsActive(0)->save();
@@ -119,16 +101,14 @@ class T4U_Payfull_ServiceController extends Mage_Core_Controller_Front_Action
         }
     }
 
-    public function issuerAction()
-    {
+    public function issuerAction() {
         $this->passIfAjax();
         $bin = $this->getRequest()->getParam('bin');
         $result = $this->getPayfull()->bin($bin);
         $this->sendJson($result);
     }
 
-    public function banksAction()
-    {
+    public function banksAction() {
         $this->passIfAjax();
 
         //get info from API about extra instalments
@@ -141,18 +121,36 @@ class T4U_Payfull_ServiceController extends Mage_Core_Controller_Front_Action
         $bankId = isset($issuer['data']['bank_id'])?$issuer['data']['bank_id']:'';
 
         $bank_info = [];
-        foreach($result['data'] as $index=>$temp) {
-            if($temp['bank'] == $bankId) {
-                $bank_info  = $temp;
-                $bank_index = $index;
 
+        // we check if the origin of the network exist use it or use card issuer or anybank related with the network
+        $originFoundArr      = FALSE;
+        $cardIssuerArr       = FALSE;
+        $networkBankFoundArr = FALSE;
+
+        foreach($result['data'] as $temp) {
+            if($temp['bank'] == $issuer['data']['bankAcceptInstallments']['origin']) {
+                $originFoundArr = $temp;
                 break;
+            } elseif ($temp['bank'] == $issuer['data']['bank_id']){
+                $cardIssuerArr = $temp;
+            } elseif (array_search($temp['bank'], $issuer['data']['bankAcceptInstallments']['network'])) {
+                $networkBankFoundArr = $temp;
             }
         }
-        $gateway = isset($bank_info['gateway'])?$bank_info['gateway']:'';
 
+        if($originFoundArr){
+            $bank_info = $originFoundArr;
+        }elseif($cardIssuerArr){
+            $bank_info = $cardIssuerArr;
+        }elseif($networkBankFoundArr){
+            $bank_info = $networkBankFoundArr;
+        }
+
+
+        $gateway = isset($bank_info['gateway'])?$bank_info['gateway']:'';
         $extraInstallmentsAndInstallmentsArr = [];
         $extra_installments_info 	         = $this->getPayfull()->extraInstallmentsList($currency);
+
         if(isset($extra_installments_info['data']['campaigns'])) {
             foreach($extra_installments_info['data']['campaigns'] as $extra_installments_row){
                 if(
@@ -180,8 +178,7 @@ class T4U_Payfull_ServiceController extends Mage_Core_Controller_Front_Action
         $this->sendJson($result);
     }
 
-    public function extraInstallmentsAction()
-    {
+    public function extraInstallmentsAction() {
         $this->passIfAjax();
         if(!Mage::getStoreConfig('payment/payfull/use_extra_installment')){
             $extra_installments_info = [];
@@ -209,8 +206,7 @@ class T4U_Payfull_ServiceController extends Mage_Core_Controller_Front_Action
         $this->sendJson($extra_installments_info);
     }
 
-    protected function passIfAjax()
-    {
+    protected function passIfAjax() {
         if ($this->getRequest()->isXmlHttpRequest()) {
             return true;
         }
