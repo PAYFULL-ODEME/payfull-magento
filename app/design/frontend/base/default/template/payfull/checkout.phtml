@@ -22,14 +22,18 @@ if(strpos($payfullHelpImagesPath, 'rwd') === false){
 
 ?>
 <style>
+
     .input-cc-number-visa{background:rgba(0,0,0,0) url("<?php echo $payfullHelpImagesPath.'payfull_creditcard_visa.png'; ?>") no-repeat scroll right center / 13% auto!important;float:left}
     .input-cc-number-master{background:rgba(0,0,0,0) url("<?php echo $payfullHelpImagesPath.'payfull_creditcard_master.png'; ?>") no-repeat scroll right center / 13% auto!important;float:left}
     .input-cc-number-not-supported{background:rgba(0,0,0,0) url("<?php echo $payfullHelpImagesPath.'payfull_creditcard_not_supported.png'; ?>") no-repeat scroll right center / 4% auto!important;float:left}
+    #payment_form_payfull {padding-left: 20px}
+    .pf_logo{display:block;width:125px;}
     #payment_form_payfull > li{width:75%!important}
     #payment_form_payfull input[type='text']{width:100%!important}
     #payment_form_payfull .v-fix{width:100%!important}
     #payment_form_payfull .divSelectMenu{width:49%!important}
     #payment_form_payfull .divSelectMenu > select{width:100%!important;height:30px!important}
+    .full-width{width:100%!important}
     .card_loder > img{display:inline;vertical-align:middle;width:25px}
     .card_image > img{display:inline-block;width:auto;height:25px;vertical-align:middle}
     .card_image{display:inline-block;padding:0 5px;vertical-align:bottom}
@@ -41,9 +45,9 @@ if(strpos($payfullHelpImagesPath, 'rwd') === false){
     .installment_body,.installment_footer{clear:both}
     .toatl_label{display:none}
     .use3d_secure_class{float:left}
-    .full-width{width:100%!important}
     #enable3dsecure label{margin-top:10px}
     #payfull_use3d_secure{margin-top:10px;margin-right:10px}
+
     .joker{border-radius:25px;font-weight:600;padding:3px 10px;background:#ff9800;color:#fff;text-transform:uppercase}
     #payment_form_payfull ul.tab{list-style-type:none;margin:0;padding:0;overflow:hidden;border:1px solid #ccc;background-color:#f1f1f1}
     #payment_form_payfull ul.tab li{float:left;height:61px;margin:0!important;padding:0!important}
@@ -54,7 +58,7 @@ if(strpos($payfullHelpImagesPath, 'rwd') === false){
     .bkmImage{height:100%!important}
     .bkmTab{padding:2px!important}
     .disabledClass{pointer-events:none;opacity:.5}
-    .pf_logo{display:block;width:125px;}
+
 </style>
 
 <ul class="form-list" id="payment_form_<?php echo $_code ?>" style="display:none;">
@@ -67,7 +71,7 @@ if(strpos($payfullHelpImagesPath, 'rwd') === false){
     <?php if($use_bkm):?>
         <div class="tabcontent" id="cardPaymentMethod" style="display: block;">
     <?php endif;?>
-            <li class="pf_logo_div">
+            <li>
                 <img class="pf_logo" src="<?php echo $payfullHelpImagesPath; ?>/payfull-logo.png">
             </li>
             <li>
@@ -169,6 +173,7 @@ if(strpos($payfullHelpImagesPath, 'rwd') === false){
         </div>
     <?php endif;?>
 </ul>
+
 <script type="text/javascript">
     banks                   = false;
     var grandTotal          = <?php echo $grandTotal;?>;
