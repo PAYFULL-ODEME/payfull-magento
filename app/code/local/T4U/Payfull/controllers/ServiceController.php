@@ -219,4 +219,5 @@ class T4U_Payfull_ServiceController extends Mage_Core_Controller_Front_Action
         }
         throw new Exception("Cannot process non-ajax request.");
     }
+
 }

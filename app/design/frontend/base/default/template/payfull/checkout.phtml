@@ -5,6 +5,38 @@ $installment          = Mage::getStoreConfig('payment/payfull/use_installment');
 $secure_3d            = Mage::getStoreConfig('payment/payfull/use3d_secure');
 $use_bkm              = Mage::getStoreConfig('payment/payfull/use_bkm');
 $quote                = Mage::getModel('checkout/session')->getQuote();
+
+// Finding the category id values in the basket
+$productCanAcceptInst = True;
+$cart                 = Mage::getModel('checkout/cart')->getQuote();
+$categoryIdArr = [];
+foreach ($cart->getAllVisibleItems() as $item)
+{
+    $product    = $item->getProduct();
+    $catArr     = $product->getCategoryIds();
+    if(!is_array($catArr)) continue;
+    foreach ($catArr as $key => $value){
+        array_push($categoryIdArr,$value);
+    }
+}
+
+// Processing the banned category id values
+$includedCategories   = Mage::getStoreConfig('payment/payfull/includecats');
+$bannedIdList         = explode(',', $includedCategories);
+
+
+foreach ($categoryIdArr as $key => $value){
+    if(in_array($value,$bannedIdList)){
+        $productCanAcceptInst = FALSE;
+        break;
+    }
+}
+
+
+if(!$productCanAcceptInst){
+    $installment = 0;
+}
+
 $quoteData            = $quote->getData();
 $grandTotal           = $this->getTotal();
 $currency_symbol      = $this->getCurrencySymbole();
@@ -19,7 +51,10 @@ $payfullHelpImagesPath = $this->getSkinUrl('images/payfull/');
 if(strpos($payfullHelpImagesPath, 'rwd') === false){
     $payfullHelpImagesPath = str_replace('frontend/base', 'frontend/rwd', $payfullHelpImagesPath);
 }
+
+
 ?>
+
 <style>
     .input-cc-number-visa {
         background: rgba(0, 0, 0, 0) url("<?php echo $payfullHelpImagesPath.'payfull_creditcard_visa.png'; ?>") no-repeat scroll right center / 13% auto !important;
@@ -74,22 +109,24 @@ if(strpos($payfullHelpImagesPath, 'rwd') === false){
 </style>
 
 <ul class="form-list" id="payment_form_<?php echo $_code ?>" style="display:none;">
-    <?php if($use_bkm):?>
+
         <ul class="tab">
             <li><a href="javascript:void(0)" class="tablinks active" id="cardPaymentMethodTab"><?php echo $text_credit_card; ?></a></li>
+            <?php if($use_bkm):?>
             <li><a href="javascript:void(0)" class="tablinks bkmTab" id="bkmPaymentMethodTab"><img class="bkmImage" src="<?php echo $payfullHelpImagesPath; ?>/BKM.png"></a></li>
+            <?php endif;?>
         </ul>
-    <?php endif;?>
 
-    <?php if($use_bkm):?>
-        <div class="tabcontent" id="cardPaymentMethod" style="display: block;">
-    <?php endif;?>
+
+    <div class="tabcontent" id="cardPaymentMethod" style="display: block;">
+
             <li class="toatl_label">
                 <h3>
                     <label><b><?php echo $this->__('Total: ') ?></b></label>
                     <span rel="<?php echo $grandTotal; ?>" id="grand_total" class="grant_total_custom"><?php echo Mage::helper('core')->currency($grandTotal, true, false); ?></span>
                 </h3>
             </li>
+
             <li>
                 <p class="required"><?php echo $this->__('* Required Fields') ?></p>
                 <label for="<?php echo $_code ?>_cc_owner" class="required"><em>*</em><?php echo $this->__('Name on Card') ?></label>
@@ -113,7 +150,7 @@ if(strpos($payfullHelpImagesPath, 'rwd') === false){
                         <select id="<?php echo $_code ?>_expiration" name="payment[cc_exp_month]" class="month validate-cc-exp required-entry">
                             <?php $_ccExpMonth = $this->getInfoData('cc_exp_month') ?>
                             <?php foreach ($this->getCcMonths() as $k => $v): ?>
-                                <option value="<?php echo $k ? $k : '' ?>"<?php if ($k == $_ccExpMonth): ?> selected="selected"<?php endif ?>><?php echo $v ?></option>
+                                <option value="<?php echo $k ? $v : '' ?>"<?php if ($k == $_ccExpMonth): ?> selected="selected"<?php endif ?>><?php echo $v ?></option>
                             <?php endforeach ?>
                         </select>
                     </div>
@@ -143,7 +180,7 @@ if(strpos($payfullHelpImagesPath, 'rwd') === false){
                 <div id="installment_table_id" class="full-width">
                     <div class="installmet_head">
                         <div class="install_head_label add_space"><img style="display: none" class="bank_photo" data-src="<?php echo $payfullHelpImagesPath; ?>" src=""></div>
-                        <div class="install_head_label"><?php echo $this->__('Installmet') ?></div>
+                        <div class="install_head_label"><?php echo $this->__('Installment') ?></div>
                         <div class="install_head_label"><?php echo $this->__('Amount / Month') ?></div>
                         <div class="install_head_label"><?php echo $this->__('Total') ?></div>
                     </div>
@@ -201,6 +238,7 @@ if(strpos($payfullHelpImagesPath, 'rwd') === false){
     var $enable3dSecure     = document.getElementById('enable3dsecure');
     BIN_GLOBAL_FOR_CARD     = '00000';
     INSTALMENTS_RESET       = true;
+    INSTALLMENTDISABLED     = <?php echo $installment;?>;
     BIN                     = false;
     bkmPaymentMethodTab     = document.getElementById('bkmPaymentMethodTab');
     cardPaymentMethodTab    = document.getElementById('cardPaymentMethodTab');
@@ -211,7 +249,6 @@ if(strpos($payfullHelpImagesPath, 'rwd') === false){
     $cc.addEventListener('change', getCardBrandAndInstallmentsList, false);
     bkmPaymentMethodTab.addEventListener('click', openBKMPaymentMethod, false);
     cardPaymentMethodTab.addEventListener('click', openCardPaymentMethod, false);
-
 
 
     function getCardBrandAndInstallmentsList(e){
@@ -229,33 +266,36 @@ if(strpos($payfullHelpImagesPath, 'rwd') === false){
                 INSTALMENTS_RESET   = true;
             }
 
+            console.log(INSTALLMENTDISABLED);
+            if(INSTALLMENTDISABLED == 1) {
+              var url = '<?php echo Mage::getUrl('payfull/service/issuer', array('_secure' => false)); ?>'+'?bin='+BIN;
+              $card_load.style.display = 'block';
 
-            var url = '<?php echo Mage::getUrl('payfull/service/issuer', array('_secure' => false)); ?>'+'?bin='+BIN;
-            $card_load.style.display = 'block';
+              var xmlhttp = new XMLHttpRequest();
+              xmlhttp.open("GET", url, true);
+              xmlhttp.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+              xmlhttp.setRequestHeader("X_REQUESTED_WITH", "XMLHttpRequest");
+              xmlhttp.send();
 
-            var xmlhttp = new XMLHttpRequest();
-            xmlhttp.open("GET", url, true);
-            xmlhttp.setRequestHeader("X-Requested-With", "XMLHttpRequest");
-            xmlhttp.setRequestHeader("X_REQUESTED_WITH", "XMLHttpRequest");
-            xmlhttp.send();
-
-            xmlhttp.onreadystatechange = function() {
+              xmlhttp.onreadystatechange = function() {
                 if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-                    var response = JSON.parse(xmlhttp.responseText);
-                    if(response.data.bank_id != ''){
-                        var bankImageSrc = $bank_photo.getAttribute('data-src');
-                        if(response.data.type == 'CREDIT'){
-                            bankImageSrc = bankImageSrc+'networks/'+response.data.bank_id+'.png';
-                        }else{
-                            bankImageSrc = bankImageSrc+'banks/'+response.data.bank_id+'.png';
-                        }
-                        $bank_photo.setAttribute('src', bankImageSrc);
-                        $bank_photo.style.display = 'block';
+                  var response = JSON.parse(xmlhttp.responseText);
+                  if(response.data.bank_id != ''){
+                    var bankImageSrc = $bank_photo.getAttribute('data-src');
+                    if(response.data.type == 'CREDIT'){
+                      bankImageSrc = bankImageSrc+'networks/'+response.data.bank_id+'.png';
+                    }else{
+                      bankImageSrc = bankImageSrc+'banks/'+response.data.bank_id+'.png';
                     }
-                    refreshInstallmentsTable(response.data.bank_id, response.data.type);
-                    $card_load.style.display = 'none';
+                    $bank_photo.setAttribute('src', bankImageSrc);
+                    $bank_photo.style.display = 'block';
+                  }
+                  refreshInstallmentsTable(response.data.bank_id, response.data.type);
+                  $card_load.style.display = 'none';
                 }
-            };
+              };
+            }
+
         }else{
             BIN_GLOBAL_FOR_CARD = BIN;
             if(INSTALMENTS_RESET){

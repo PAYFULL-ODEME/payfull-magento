@@ -12,7 +12,6 @@ class T4U_Payfull_Block_Form_Checkout extends Mage_Payment_Block_Form
         return Mage::getSingleton('payment/config');  
     }
 
-
     public function getQuote()
     {
         return Mage::getModel('checkout/session')->getQuote();
