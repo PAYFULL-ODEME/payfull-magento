@@ -3,26 +3,18 @@
 class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
 {
 
-    protected $_code = 'payfull';
-    protected $_formBlockType = 'payfull/form_checkout';
-    protected $_infoBlockType = 'payfull/info_payment';
-
-    protected $_canVoid = false;
-    protected $_canOrder = true;
-    protected $_canRefund = true;
-    protected $_canCapture = true;
-    protected $_canAuthorize = false;
-    protected $_canRefundInvoicePartial     = true;
-    protected $_canCapturePartial= true;
-    protected $_canUseCheckout = true;
-    protected $_canSaveCc = false;
-
-    // public function initialize($paymentAction, $stateObject)
-    // {
-    //     print_r($paymentAction);
-    //     throw new Exception("payment action: ".$paymentAction);
-    //     return $this;
-    // }
+    protected $_code                    = 'payfull';
+    protected $_formBlockType           = 'payfull/form_checkout';
+    protected $_infoBlockType           = 'payfull/info_payment';
+    protected $_canVoid                 = false;
+    protected $_canOrder                = true;
+    protected $_canRefund               = true;
+    protected $_canCapture              = true;
+    protected $_canAuthorize            = false;
+    protected $_canRefundInvoicePartial = true;
+    protected $_canCapturePartial       = true;
+    protected $_canUseCheckout          = true;
+    protected $_canSaveCc               = false;
 
     public function api()
     {
@@ -446,4 +438,5 @@ class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
 
         return $content;
     }
+
 }

@@ -83,6 +83,7 @@ class T4U_Payfull_ServiceController extends Mage_Core_Controller_Front_Action
             $order->setTotalPaid($amount);
             $order->setStatus('processing', false);
             $order->setState(Mage_Sales_Model_Order::STATE_PROCESSING, true, "3D payment succeeded.");
+            $order->sendNewOrderEmail();
             $order->save();
             $payment->save();
             // die('done');
