@@ -75,7 +75,7 @@ if(strpos($payfullHelpImagesPath, 'rwd') === false){
     #payment_form_payfull input[type='text'] {width: 100% !important;  }
     #payment_form_payfull .v-fix {width: 100% !important;  }
     #payment_form_payfull .divSelectMenu {width: 49% !important;  }
-    #payment_form_payfull .divSelectMenu > select {width: 100% !important; height: 30px !important; }
+    #payment_form_payfull .divSelectMenu > select {width: 100% !important; height:45px !important; }
     .card_loder > img {display: inline;vertical-align: middle;width: 25px;}
     .card_image > img {display: inline-block;width: auto;height:25px;vertical-align: middle;}
     .card_image { display: inline-block;  padding:0 5px;vertical-align: bottom;}
@@ -209,7 +209,7 @@ if(strpos($payfullHelpImagesPath, 'rwd') === false){
             <?php if ($secure_3d == 1) : ?>
             <li class="td_secure" id="enable3dsecure">
                 <div class="input-box full-width">
-                    <input class="use3d_secure_class" type="checkbox" id="<?php echo $_code ?>_use3d_secure" value="1" name="payment[use3d_secure]" />
+                    <input class="use3d_secure_class" type="checkbox" id="<?php echo $_code ?>_use3d_secure" value="1" data-forced="true" disabled="disabled" checked="checked" name="payment[use3d_secure]" />
                     <label for="<?php echo $_code ?>_use3d_secure"> <?php echo $this->__('Use 3D secure Payments System') ?></label>
                 </div>
             </li>

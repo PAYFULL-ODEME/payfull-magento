@@ -100,7 +100,7 @@ class T4U_Payfull_ServiceController extends Mage_Core_Controller_Front_Action
                 'code' =>  $data['ErrorCode'],
                 'message' =>  $error,
             ));
-            Mage::getSingleton('core/session')->addError(Mage::helper('payfull')->__("3D secure payment failed."));
+            Mage::getSingleton('core/session')->addError(Mage::helper('payfull')->__("3D İşlemi Başarısız."));
             $order->cancel();
             $order->setState(Mage_Sales_Model_Order::STATE_CANCELED, true, $error);
             $order->registerCancellation($error);
