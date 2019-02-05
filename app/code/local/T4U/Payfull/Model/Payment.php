@@ -397,7 +397,7 @@ class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
         $message = '';
         ksort($data);
         foreach($data as $key=>$value) {
-            $message .= strlen($value).$value;
+            $message .= mb_strlen($value).$value;
         }
         $hash = hash_hmac('sha1', $message, $password);
         
