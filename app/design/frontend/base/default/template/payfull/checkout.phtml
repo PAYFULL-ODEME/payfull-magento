@@ -318,7 +318,7 @@ if(strpos($payfullHelpImagesPath, 'rwd') === false){
         var currency   = '<?php echo $currency; ?>';
         var url_params = '?bin='+BIN+'&total='+total+'&currency='+currency;
 
-        var url = '<?php echo Mage::getUrl('payfull/service/banks', array('_secure' => false)); ?>'+url_params;
+        var url = '<?php echo Mage::getUrl('payfull/service/banks', array('_secure' => true)); ?>'+url_params;
         $card_load.style.display = 'block';
         var xmlhttp = new XMLHttpRequest();
         xmlhttp.open("GET", url, true);
@@ -428,7 +428,7 @@ if(strpos($payfullHelpImagesPath, 'rwd') === false){
         var gateway   = $gateway.value;
 
         var url_params = '?total='+total+'&currency='+currency+'&installments='+installments+'&bankId='+bankId+'&gateway='+gateway;
-        var url = '<?php echo Mage::getUrl('payfull/service/extraInstallments', array('_secure' => false)); ?>'+url_params;
+        var url = '<?php echo Mage::getUrl('payfull/service/extraInstallments', array('_secure' => true)); ?>'+url_params;
         $card_load.style.display = 'block';
         var xmlhttp = new XMLHttpRequest();
         xmlhttp.open("GET", url, true);

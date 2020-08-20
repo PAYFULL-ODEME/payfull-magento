@@ -124,6 +124,9 @@ class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
             $this->validatePaymentData($request);
             $result = $this->callApi('Sale', $request, false);
             $isValid3DResponse = strpos($result, '<html') !== false ? true : false; // response has HTML content
+            if(!$isValid3DResponse) {
+                $isValid3DResponse = strpos($result, '<form') !== false ? true : false; // response has Form content
+            }
             if($isValid3DResponse) {
                 $payment->setIsTransactionClosed(false);
                 $order->setTotalPaid(0)->save();
@@ -272,7 +275,7 @@ class T4U_Payfull_Model_Payment extends Mage_Payment_Model_Method_Abstract
         $billAddress    = $order->getBillingAddress();
         $installment    = $this->getConfigData('use_installment') ? $payment->getInstallment() : 1;
         $use_bkm        = $this->getIsBkm();
-        $return_url     = Mage::getUrl('payfull/service/response', array('_secure' => false));
+        $return_url     = Mage::getUrl('payfull/service/response', array('_secure' => true));
 
 		$store = Mage::app()->getStore();
 		$payment_title = "{$store->getName()}: total $total [$currency]";
